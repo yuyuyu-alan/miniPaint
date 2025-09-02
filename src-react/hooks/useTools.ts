@@ -223,6 +223,20 @@ export const useTools = () => {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [getToolByShortcut, activateTool])
 
+  // 监听颜色变化，更新当前工具配置
+  useEffect(() => {
+    if (!fabricCanvas || !activeTool) return
+
+    // 如果当前是画笔工具，需要重新配置画笔颜色
+    if (activeTool === 'brush' && fabricCanvas.isDrawingMode) {
+      const settings = getActiveToolSettings()
+      const brush = new fabric.PencilBrush(fabricCanvas)
+      brush.width = settings.brushSize || 5
+      brush.color = settings.brushColor || colors.primary
+      fabricCanvas.freeDrawingBrush = brush
+    }
+  }, [fabricCanvas, activeTool, colors.primary, getActiveToolSettings])
+
   // 创建形状
   const createShape = useCallback((type: 'rectangle' | 'circle', startPoint: fabric.Point, endPoint: fabric.Point) => {
     if (!fabricCanvas) return
