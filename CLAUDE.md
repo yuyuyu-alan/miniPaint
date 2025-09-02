@@ -1,145 +1,112 @@
-# miniPaint React 重构项目规划
+# miniPaint React 重构 - 项目内存文档
 
-## 项目概述
+> 本文档是 miniPaint React 重构项目的核心参考文档，包含项目架构、编码标准、工作流程等关键信息。
 
-使用现代技术栈 `pnpm + Vite + React + UnoCSS` 重构 miniPaint 在线图像编辑器，保持原有功能的同时提升性能、可维护性和用户体验。
+## 🏗️ 项目架构概览
 
-## 技术栈选择
+### 技术栈
+```
+pnpm + Vite + React 19 + TypeScript + UnoCSS + Zustand + Fabric.js
+```
 
-### 核心技术栈
-- **包管理器**: pnpm (更快的安装速度，更少的磁盘占用)
-- **构建工具**: Vite (极速热更新，原生 ESM 支持)
-- **前端框架**: React 18 (并发特性，更好的性能)
-- **样式方案**: UnoCSS (原子化 CSS，按需生成)
-- **类型检查**: TypeScript (类型安全，更好的开发体验)
-
-### 辅助技术
+### 核心依赖
 - **状态管理**: Zustand (轻量级，简单易用)
-- **Canvas 库**: Fabric.js (功能强大的 Canvas 操作库)
+- **Canvas 库**: Fabric.js (功能强大的 Canvas 操作库)  
 - **UI 组件**: Radix UI (无样式组件库)
 - **图标库**: Lucide React (现代化图标)
-- **文件处理**: File API + Web Workers
+- **样式**: UnoCSS (原子化 CSS，按需生成)
 
-## 项目结构设计
+## 📁 项目结构标准
 
 ```
-miniPaint-react/
-├── public/                     # 静态资源
-│   ├── icons/                 # 工具图标
-│   └── examples/              # 示例文件
-├── src/
-│   ├── components/            # 通用组件
-│   │   ├── ui/               # 基础 UI 组件
-│   │   ├── canvas/           # Canvas 相关组件
-│   │   ├── panels/           # 面板组件
-│   │   └── tools/            # 工具组件
-│   ├── hooks/                # 自定义 Hooks
-│   │   ├── useCanvas.ts      # Canvas 操作
-│   │   ├── useTool.ts        # 工具状态
-│   │   ├── useLayer.ts       # 图层管理
-│   │   └── useHistory.ts     # 撤销重做
-│   ├── stores/               # 状态管理
-│   │   ├── canvas.ts         # Canvas 状态
-│   │   ├── layers.ts         # 图层状态
-│   │   ├── tools.ts          # 工具状态
-│   │   └── ui.ts             # UI 状态
-│   ├── utils/                # 工具函数
-│   │   ├── canvas.ts         # Canvas 工具函数
-│   │   ├── image.ts          # 图像处理
-│   │   ├── file.ts           # 文件操作
-│   │   └── effects.ts        # 效果处理
-│   ├── workers/              # Web Workers
-│   │   ├── image-processor.ts # 图像处理
-│   │   └── effects.ts        # 效果计算
-│   ├── types/                # TypeScript 类型定义
-│   ├── constants/            # 常量定义
-│   ├── App.tsx              # 主应用组件
-│   ├── main.tsx             # 应用入口
-│   └── vite-env.d.ts        # Vite 类型声明
-├── package.json
-├── vite.config.ts
-├── tsconfig.json
-├── uno.config.ts
-└── README.md
+src/
+├── components/               # 组件目录
+│   ├── ui/                  # 基础UI组件 (Button, Input, Modal等)
+│   ├── canvas/              # Canvas相关组件
+│   ├── panels/              # 面板组件 (ToolPanel, LayerPanel等)
+│   └── tools/               # 工具组件 (BrushTool, SelectTool等)
+├── hooks/                   # 自定义Hooks
+│   ├── useCanvas.ts         # Canvas操作Hook
+│   ├── useTool.ts           # 工具状态Hook
+│   ├── useLayer.ts          # 图层管理Hook
+│   └── useHistory.ts        # 撤销重做Hook
+├── stores/                  # Zustand状态管理
+│   ├── canvas.ts            # Canvas状态
+│   ├── layers.ts            # 图层状态
+│   ├── tools.ts             # 工具状态
+│   └── ui.ts                # UI状态
+├── utils/                   # 工具函数
+├── workers/                 # Web Workers
+├── types/                   # TypeScript类型定义
+├── constants/               # 常量定义
+└── App.tsx                  # 主应用组件
 ```
 
-## 核心组件设计
+### 文件命名规范
+- **组件**: PascalCase (ToolPanel.tsx)
+- **Hooks**: camelCase with use prefix (useCanvas.ts)
+- **工具函数**: camelCase (imageUtils.ts)
+- **类型定义**: PascalCase with Type suffix (CanvasType.ts)
+- **常量**: UPPER_SNAKE_CASE (TOOL_TYPES.ts)
 
-### 1. 主应用布局 (App.tsx)
+## 🧩 核心组件架构
+
+### 主应用布局
 ```tsx
-interface AppLayout {
-  header: MenuBar;           // 顶部菜单栏
-  leftSidebar: ToolPanel;    // 左侧工具面板
-  mainArea: CanvasArea;      // 主画布区域
-  rightSidebar: {
-    layerPanel: LayerPanel;  // 图层面板
-    propertyPanel: PropertyPanel; // 属性面板
-    colorPanel: ColorPanel;  // 颜色面板
-  };
-}
+// App.tsx - 主应用组件
+<div className="app-layout">
+  <MenuBar />                    // 顶部菜单栏
+  <div className="main-content">
+    <ToolPanel />                // 左侧工具面板
+    <CanvasArea />               // 主画布区域
+    <div className="right-panels">
+      <LayerPanel />             // 图层面板
+      <PropertyPanel />          // 属性面板
+      <ColorPanel />             // 颜色面板
+    </div>
+  </div>
+</div>
 ```
 
-### 2. Canvas 组件架构
+### Canvas 组件层次
 ```tsx
-// 主 Canvas 容器
 <CanvasContainer>
-  <CanvasBackground />      // 背景网格
-  <MainCanvas />           // 主画布
-  <OverlayCanvas />        // 覆盖层（选择框等）
-  <PreviewCanvas />        // 预览层
+  <CanvasBackground />          // 背景网格/透明度显示
+  <MainCanvas />               // 主画布 (Fabric.js)
+  <OverlayCanvas />            // 覆盖层 (选择框、辅助线等)
+  <PreviewCanvas />            // 预览层 (效果预览)
 </CanvasContainer>
 ```
 
-### 3. 工具系统组件
-```tsx
-// 工具面板
-<ToolPanel>
-  <ToolGroup name="selection">
-    <SelectTool />
-    <MagicWandTool />
-  </ToolGroup>
-  <ToolGroup name="drawing">
-    <BrushTool />
-    <PencilTool />
-    <EraserTool />
-  </ToolGroup>
-  <ToolGroup name="shapes">
-    <RectangleTool />
-    <EllipseTool />
-    <LineTool />
-  </ToolGroup>
-</ToolPanel>
-```
+## 🗄️ 状态管理架构 (Zustand)
 
-## 状态管理设计
-
-### 1. Canvas Store (Zustand)
+### Canvas Store
 ```typescript
 interface CanvasStore {
-  // 画布状态
+  // 画布基础状态
   width: number;
   height: number;
   zoom: number;
   offset: { x: number; y: number };
   
-  // 画布操作
+  // Fabric.js 实例
+  fabricCanvas: fabric.Canvas | null;
+  
+  // 操作方法
   setDimensions: (width: number, height: number) => void;
   setZoom: (zoom: number) => void;
   setOffset: (offset: { x: number; y: number }) => void;
-  
-  // 画布实例
-  fabricCanvas: fabric.Canvas | null;
   setFabricCanvas: (canvas: fabric.Canvas) => void;
 }
 ```
 
-### 2. Layer Store
+### Layer Store
 ```typescript
 interface LayerStore {
   layers: Layer[];
   activeLayerId: string | null;
   
-  // 图层操作
+  // CRUD 操作
   addLayer: (layer: Omit<Layer, 'id'>) => void;
   removeLayer: (id: string) => void;
   updateLayer: (id: string, updates: Partial<Layer>) => void;
@@ -148,168 +115,195 @@ interface LayerStore {
 }
 ```
 
-### 3. Tool Store
+### Tool Store
 ```typescript
 interface ToolStore {
   activeTool: ToolType;
-  toolSettings: Record<ToolType, any>;
+  toolSettings: Record<ToolType, ToolSettings>;
   
   setActiveTool: (tool: ToolType) => void;
-  updateToolSettings: (tool: ToolType, settings: any) => void;
+  updateToolSettings: (tool: ToolType, settings: Partial<ToolSettings>) => void;
 }
 ```
 
-## 核心 Hooks 设计
+## 🪝 核心 Hooks 设计
 
-### 1. useCanvas Hook
+### useCanvas Hook
 ```typescript
 const useCanvas = () => {
-  const canvasStore = useCanvasStore();
+  const { fabricCanvas, setFabricCanvas } = useCanvasStore();
   
   const initCanvas = useCallback((element: HTMLCanvasElement) => {
-    const fabricCanvas = new fabric.Canvas(element);
-    canvasStore.setFabricCanvas(fabricCanvas);
-  }, []);
+    const canvas = new fabric.Canvas(element, {
+      width: 800,
+      height: 600,
+      backgroundColor: 'white'
+    });
+    setFabricCanvas(canvas);
+  }, [setFabricCanvas]);
   
   const addObject = useCallback((object: fabric.Object) => {
-    canvasStore.fabricCanvas?.add(object);
-  }, [canvasStore.fabricCanvas]);
+    fabricCanvas?.add(object);
+    fabricCanvas?.renderAll();
+  }, [fabricCanvas]);
   
-  return { initCanvas, addObject, canvas: canvasStore.fabricCanvas };
+  return { initCanvas, addObject, canvas: fabricCanvas };
 };
 ```
 
-### 2. useHistory Hook (撤销重做)
+### useHistory Hook
 ```typescript
 const useHistory = () => {
-  const [history, setHistory] = useState<HistoryState[]>([]);
+  const [history, setHistory] = useState<CanvasState[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   
   const saveState = useCallback(() => {
-    // 保存当前状态到历史记录
-  }, []);
+    const canvas = useCanvasStore.getState().fabricCanvas;
+    if (canvas) {
+      const state = canvas.toJSON();
+      setHistory(prev => [...prev.slice(0, currentIndex + 1), state]);
+      setCurrentIndex(prev => prev + 1);
+    }
+  }, [currentIndex]);
   
   const undo = useCallback(() => {
-    // 撤销操作
-  }, []);
+    if (currentIndex > 0) {
+      const canvas = useCanvasStore.getState().fabricCanvas;
+      canvas?.loadFromJSON(history[currentIndex - 1], () => {
+        canvas.renderAll();
+      });
+      setCurrentIndex(prev => prev - 1);
+    }
+  }, [currentIndex, history]);
   
-  const redo = useCallback(() => {
-    // 重做操作
-  }, []);
-  
-  return { saveState, undo, redo, canUndo: currentIndex > 0, canRedo: currentIndex < history.length - 1 };
+  return { saveState, undo, redo, canUndo: currentIndex > 0 };
 };
 ```
 
-### 3. useTool Hook
+### useTool Hook
 ```typescript
 const useTool = (toolType: ToolType) => {
-  const toolStore = useToolStore();
-  const canvasStore = useCanvasStore();
+  const { activeTool, toolSettings, setActiveTool, updateToolSettings } = useToolStore();
   
-  const isActive = toolStore.activeTool === toolType;
-  const settings = toolStore.toolSettings[toolType];
+  const isActive = activeTool === toolType;
+  const settings = toolSettings[toolType] || {};
   
   const activate = useCallback(() => {
-    toolStore.setActiveTool(toolType);
-  }, [toolType]);
+    setActiveTool(toolType);
+  }, [toolType, setActiveTool]);
   
-  const updateSettings = useCallback((newSettings: any) => {
-    toolStore.updateToolSettings(toolType, newSettings);
-  }, [toolType]);
-  
-  return { isActive, settings, activate, updateSettings };
+  return { isActive, settings, activate, updateToolSettings };
 };
 ```
 
-## 工具系统实现
+## 🛠️ 工具系统架构
 
-### 1. 基础工具接口
+### 工具基类接口
 ```typescript
 interface BaseTool {
-  name: string;
+  name: ToolType;
   icon: string;
   cursor: string;
+  settings: ToolSettings;
   
-  onActivate?: () => void;
-  onDeactivate?: () => void;
+  onActivate?: (canvas: fabric.Canvas) => void;
+  onDeactivate?: (canvas: fabric.Canvas) => void;
   onMouseDown?: (event: fabric.IEvent) => void;
   onMouseMove?: (event: fabric.IEvent) => void;
   onMouseUp?: (event: fabric.IEvent) => void;
 }
 ```
 
-### 2. 画笔工具实现
+### 工具实现示例
 ```typescript
-class BrushTool implements BaseTool {
-  name = 'brush';
+// 画笔工具
+export class BrushTool implements BaseTool {
+  name = 'brush' as const;
   icon = 'brush';
   cursor = 'crosshair';
+  settings = { size: 5, color: '#000000', opacity: 1 };
   
-  onActivate() {
-    const canvas = useCanvasStore.getState().fabricCanvas;
-    if (canvas) {
-      canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-    }
+  onActivate(canvas: fabric.Canvas) {
+    canvas.isDrawingMode = true;
+    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+    canvas.freeDrawingBrush.width = this.settings.size;
+    canvas.freeDrawingBrush.color = this.settings.color;
   }
   
-  onDeactivate() {
-    const canvas = useCanvasStore.getState().fabricCanvas;
-    if (canvas) {
-      canvas.isDrawingMode = false;
-    }
+  onDeactivate(canvas: fabric.Canvas) {
+    canvas.isDrawingMode = false;
+  }
+}
+
+// 选择工具
+export class SelectTool implements BaseTool {
+  name = 'select' as const;
+  icon = 'mouse-pointer';
+  cursor = 'default';
+  settings = {};
+  
+  onActivate(canvas: fabric.Canvas) {
+    canvas.isDrawingMode = false;
+    canvas.selection = true;
   }
 }
 ```
 
-## 效果系统设计
+## 🎨 效果系统架构
 
-### 1. Web Worker 图像处理
+### Web Worker 图像处理
 ```typescript
 // workers/image-processor.ts
-self.onmessage = function(e) {
+interface ProcessMessage {
+  imageData: ImageData;
+  effect: EffectType;
+  params: EffectParams;
+}
+
+self.onmessage = function(e: MessageEvent<ProcessMessage>) {
   const { imageData, effect, params } = e.data;
   
-  let processedData;
+  let processedData: ImageData;
+  
   switch (effect) {
     case 'blur':
-      processedData = applyBlur(imageData, params.radius);
+      processedData = Effects.blur(imageData, params.radius);
       break;
     case 'brightness':
-      processedData = applyBrightness(imageData, params.value);
+      processedData = Effects.brightness(imageData, params.value);
       break;
-    // ... 其他效果
+    case 'contrast':
+      processedData = Effects.contrast(imageData, params.value);
+      break;
+    default:
+      processedData = imageData;
   }
   
   self.postMessage({ processedData });
 };
 ```
 
-### 2. 效果应用 Hook
+### 效果应用 Hook
 ```typescript
 const useEffects = () => {
-  const applyEffect = useCallback(async (effect: EffectType, params: any) => {
+  const applyEffect = useCallback(async (effect: EffectType, params: EffectParams) => {
     const canvas = useCanvasStore.getState().fabricCanvas;
     const activeObject = canvas?.getActiveObject();
     
     if (activeObject && activeObject.type === 'image') {
       const worker = new Worker('/workers/image-processor.js');
       
-      return new Promise((resolve) => {
-        worker.postMessage({
-          imageData: activeObject.toCanvasElement().getContext('2d').getImageData(),
-          effect,
-          params
-        });
-        
+      const processedData = await new Promise<ImageData>((resolve) => {
+        worker.postMessage({ imageData: getImageData(activeObject), effect, params });
         worker.onmessage = (e) => {
-          const { processedData } = e.data;
-          // 应用处理后的图像数据
-          resolve(processedData);
+          resolve(e.data.processedData);
           worker.terminate();
         };
       });
+      
+      // 应用处理后的图像
+      updateObjectWithImageData(activeObject, processedData);
+      canvas?.renderAll();
     }
   }, []);
   
@@ -317,67 +311,66 @@ const useEffects = () => {
 };
 ```
 
-## 文件系统设计
+## 📁 文件系统架构
 
-### 1. 文件操作 Hook
+### 文件操作 Hook
 ```typescript
 const useFileOperations = () => {
+  const { fabricCanvas } = useCanvasStore();
+  const { layers } = useLayerStore();
+  
   const openFile = useCallback(async (file: File) => {
-    const canvas = useCanvasStore.getState().fabricCanvas;
+    if (!fabricCanvas) return;
     
     if (file.type.startsWith('image/')) {
       const imageUrl = URL.createObjectURL(file);
       const img = await fabric.Image.fromURL(imageUrl);
-      canvas?.add(img);
+      fabricCanvas.add(img);
+      fabricCanvas.renderAll();
     } else if (file.name.endsWith('.json')) {
-      // 加载 miniPaint 项目文件
       const projectData = JSON.parse(await file.text());
       await loadProject(projectData);
     }
-  }, []);
+  }, [fabricCanvas]);
   
   const saveProject = useCallback(() => {
-    const canvas = useCanvasStore.getState().fabricCanvas;
-    const layers = useLayerStore.getState().layers;
+    if (!fabricCanvas) return;
     
     const projectData = {
-      canvas: canvas?.toJSON(),
+      canvas: fabricCanvas.toJSON(['id', 'selectable']),
       layers,
       metadata: {
         version: '2.0',
-        created: new Date().toISOString()
+        created: new Date().toISOString(),
+        width: fabricCanvas.width,
+        height: fabricCanvas.height
       }
     };
     
-    const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'project.json';
-    a.click();
-  }, []);
+    downloadFile(JSON.stringify(projectData, null, 2), 'project.json', 'application/json');
+  }, [fabricCanvas, layers]);
   
-  const exportImage = useCallback((format: 'png' | 'jpg' | 'webp') => {
-    const canvas = useCanvasStore.getState().fabricCanvas;
-    const dataURL = canvas?.toDataURL(`image/${format}`);
+  const exportImage = useCallback((format: 'png' | 'jpg' | 'webp', quality = 1) => {
+    if (!fabricCanvas) return;
     
-    if (dataURL) {
-      const a = document.createElement('a');
-      a.href = dataURL;
-      a.download = `image.${format}`;
-      a.click();
-    }
-  }, []);
+    const dataURL = fabricCanvas.toDataURL({
+      format: format === 'jpg' ? 'jpeg' : format,
+      quality,
+      multiplier: 1
+    });
+    
+    downloadFile(dataURL, `image.${format}`, `image/${format}`);
+  }, [fabricCanvas]);
   
   return { openFile, saveProject, exportImage };
 };
 ```
 
-## UnoCSS 配置
+## 🎨 样式系统 (UnoCSS)
 
-### 1. uno.config.ts
+### 配置文件
 ```typescript
+// uno.config.ts
 import { defineConfig, presetUno, presetAttributify, presetIcons } from 'unocss';
 
 export default defineConfig({
@@ -392,175 +385,288 @@ export default defineConfig({
   ],
   theme: {
     colors: {
-      primary: {
-        50: '#f0f9ff',
-        500: '#3b82f6',
-        600: '#2563eb',
-        700: '#1d4ed8',
-      },
-      gray: {
-        50: '#f9fafb',
-        100: '#f3f4f6',
-        200: '#e5e7eb',
-        300: '#d1d5db',
-        400: '#9ca3af',
-        500: '#6b7280',
-        600: '#4b5563',
-        700: '#374151',
-        800: '#1f2937',
-        900: '#111827',
-      }
+      primary: '#3b82f6',
+      secondary: '#6b7280',
+      success: '#10b981',
+      warning: '#f59e0b',
+      error: '#ef4444',
     }
   },
   shortcuts: {
-    'btn': 'px-4 py-2 rounded bg-primary-500 text-white hover:bg-primary-600 transition-colors',
+    // 按钮样式
+    'btn': 'px-4 py-2 rounded bg-primary text-white hover:bg-primary/90 transition-colors',
     'btn-secondary': 'px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors',
-    'panel': 'bg-white border border-gray-200 rounded-lg shadow-sm',
-    'tool-button': 'w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors',
-    'tool-button-active': 'w-10 h-10 flex items-center justify-center rounded bg-primary-100 text-primary-600',
+    
+    // 面板样式
+    'panel': 'bg-white border border-gray-200 rounded-lg shadow-sm p-4',
+    'panel-header': 'flex items-center justify-between mb-4 pb-2 border-b border-gray-200',
+    
+    // 工具按钮
+    'tool-btn': 'w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors',
+    'tool-btn-active': 'w-10 h-10 flex items-center justify-center rounded bg-primary/10 text-primary',
+    
+    // 布局
+    'flex-center': 'flex items-center justify-center',
+    'flex-between': 'flex items-center justify-between',
   }
 });
 ```
 
-## 开发阶段规划
-
-### 阶段 1: 项目初始化 (1周)
-- [ ] 创建 Vite + React + TypeScript 项目
-- [ ] 配置 pnpm workspace
-- [ ] 设置 UnoCSS 和基础样式
-- [ ] 配置 ESLint、Prettier
-- [ ] 创建基础项目结构
-
-### 阶段 2: 核心架构 (2-3周)
-- [ ] 实现 Zustand 状态管理
-- [ ] 创建基础 Canvas 组件
-- [ ] 实现核心 Hooks (useCanvas, useHistory)
-- [ ] 搭建主应用布局
-- [ ] 集成 Fabric.js
-
-### 阶段 3: 工具系统 (3-4周)
-- [ ] 实现基础工具接口
-- [ ] 开发选择工具
-- [ ] 开发绘图工具 (画笔、铅笔、橡皮擦)
-- [ ] 开发形状工具 (矩形、椭圆、线条)
-- [ ] 实现工具属性面板
-
-### 阶段 4: 图层系统 (2-3周)
-- [ ] 实现图层数据结构
-- [ ] 开发图层面板 UI
-- [ ] 实现图层操作 (添加、删除、重排序)
-- [ ] 支持图层可见性和透明度
-- [ ] 实现图层混合模式
-
-### 阶段 5: 效果系统 (3-4周)
-- [ ] 设置 Web Workers
-- [ ] 实现基础滤镜 (模糊、锐化、亮度、对比度)
-- [ ] 开发高级效果 (Instagram 滤镜)
-- [ ] 实现效果预览
-- [ ] 优化效果处理性能
-
-### 阶段 6: 文件系统 (2周)
-- [ ] 实现文件打开功能
-- [ ] 支持多种图像格式
-- [ ] 实现项目保存/加载
-- [ ] 支持图像导出
-- [ ] 实现拖拽上传
-
-### 阶段 7: UI/UX 优化 (2-3周)
-- [ ] 响应式设计
-- [ ] 键盘快捷键
-- [ ] 主题切换
-- [ ] 动画和过渡效果
-- [ ] 移动端适配
-
-### 阶段 8: 性能优化和测试 (2周)
-- [ ] 性能分析和优化
-- [ ] 内存泄漏检查
-- [ ] 单元测试
-- [ ] 集成测试
-- [ ] 用户测试
-
-## 技术难点和解决方案
-
-### 1. Canvas 性能优化
-- **问题**: 大图像处理时的性能瓶颈
-- **解决方案**: 
-  - 使用 OffscreenCanvas 进行后台渲染
-  - 实现图像分块处理
-  - 使用 Web Workers 处理复杂计算
-
-### 2. 内存管理
-- **问题**: 历史记录和大图像占用大量内存
-- **解决方案**:
-  - 实现智能历史记录清理
-  - 使用 IndexedDB 存储大数据
-  - 实现图像压缩和缓存策略
-
-### 3. 跨浏览器兼容性
-- **问题**: 不同浏览器的 Canvas API 差异
-- **解决方案**:
-  - 使用 Fabric.js 抽象 Canvas 操作
-  - 实现 polyfill 支持
-  - 渐进式功能增强
-
-### 4. 移动端适配
-- **问题**: 触摸操作和小屏幕适配
-- **解决方案**:
-  - 实现触摸手势识别
-  - 响应式 UI 设计
-  - 移动端专用工具栏
-
-## 部署和发布
-
-### 1. 构建配置
+### 常用样式类
 ```typescript
-// vite.config.ts
-export default defineConfig({
-  build: {
-    target: 'es2020',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          fabric: ['fabric'],
-          utils: ['lodash', 'date-fns']
-        }
-      }
+// 布局类
+'flex flex-col h-screen'           // 全屏垂直布局
+'grid grid-cols-[auto_1fr_auto]'   // 三栏网格布局
+'absolute inset-0'                 // 绝对定位填满父容器
+
+// 交互类
+'cursor-pointer select-none'       // 可点击不可选择
+'transition-all duration-200'      // 平滑过渡动画
+'hover:bg-gray-100 active:bg-gray-200' // 悬停和激活状态
+
+// 工具面板类
+'border-r border-gray-200 bg-gray-50' // 右边框和背景
+'p-2 space-y-1'                   // 内边距和垂直间距
+```
+
+## 📝 编码标准
+
+### TypeScript 规范
+```typescript
+// 接口定义
+interface ComponentProps {
+  className?: string;
+  children?: React.ReactNode;
+  onClick?: () => void;
+}
+
+// React 19 组件定义 (使用 React Compiler 优化)
+const Component: React.FC<ComponentProps> = ({ className, children, onClick }) => {
+  return (
+    <div className={cn('base-class', className)} onClick={onClick}>
+      {children}
+    </div>
+  );
+};
+
+// React 19 use() Hook 示例
+const useAsyncData = (promise: Promise<any>) => {
+  const data = use(promise);
+  return data;
+};
+
+// 传统 Hook 定义
+const useCustomHook = (initialValue: string) => {
+  const [value, setValue] = useState(initialValue);
+  
+  const updateValue = useCallback((newValue: string) => {
+    setValue(newValue);
+  }, []);
+  
+  return { value, updateValue };
+};
+```
+
+### 组件规范
+```typescript
+// React 19 组件文件结构
+import React, { use } from 'react';
+import { cn } from '@/utils/cn';
+import type { ComponentProps } from './types';
+
+// React 19 组件实现 (自动优化)
+export const Component: React.FC<ComponentProps> = (props) => {
+  // React 19 自动优化，无需手动 memo
+  // React Compiler 会自动处理重渲染优化
+  
+  return (
+    <div className={cn('component-base', props.className)}>
+      {props.children}
+    </div>
+  );
+};
+
+// 异步组件示例 (React 19)
+export const AsyncComponent: React.FC<{ dataPromise: Promise<any> }> = ({ dataPromise }) => {
+  const data = use(dataPromise);
+  
+  return <div>{data.content}</div>;
+};
+
+// 默认导出
+export default Component;
+```
+
+### 状态管理规范
+```typescript
+// Zustand Store 定义
+interface StoreState {
+  data: DataType[];
+  loading: boolean;
+  error: string | null;
+}
+
+interface StoreActions {
+  fetchData: () => Promise<void>;
+  updateData: (id: string, updates: Partial<DataType>) => void;
+  clearError: () => void;
+}
+
+export const useStore = create<StoreState & StoreActions>((set, get) => ({
+  // 初始状态
+  data: [],
+  loading: false,
+  error: null,
+  
+  // 操作方法
+  fetchData: async () => {
+    set({ loading: true, error: null });
+    try {
+      const data = await api.fetchData();
+      set({ data, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
     }
   },
-  worker: {
-    format: 'es'
-  }
+  
+  updateData: (id, updates) => {
+    set(state => ({
+      data: state.data.map(item => 
+        item.id === id ? { ...item, ...updates } : item
+      )
+    }));
+  },
+  
+  clearError: () => set({ error: null })
+}));
+```
+
+## 🔄 常见工作流程
+
+### 1. 添加新工具
+```bash
+# 1. 创建工具文件
+touch src/tools/NewTool.ts
+
+# 2. 实现工具类
+# 3. 在工具注册表中注册
+# 4. 添加工具图标和样式
+# 5. 更新工具类型定义
+```
+
+### 2. 添加新效果
+```bash
+# 1. 在 workers/effects.ts 中添加效果函数
+# 2. 更新效果类型定义
+# 3. 在效果面板中添加UI控件
+# 4. 测试效果性能
+```
+
+### 3. 添加新组件
+```bash
+# 1. 创建组件文件和类型定义
+# 2. 实现组件逻辑
+# 3. 添加样式类
+# 4. 编写单元测试
+# 5. 更新 Storybook 文档
+```
+
+### 4. 性能优化检查清单 (React 19)
+- [ ] 启用 React Compiler 自动优化
+- [ ] 使用 use() Hook 处理异步数据
+- [ ] 利用 Concurrent Features 优化用户体验
+- [ ] 检查不必要的重新渲染（React DevTools Profiler）
+- [ ] 优化 Canvas 渲染频率
+- [ ] 使用 Web Workers 处理重计算
+- [ ] 实现虚拟滚动（如果需要）
+- [ ] 使用 React 19 的自动批处理优化
+
+## 🚀 部署和构建
+
+### 构建命令
+```bash
+# 开发环境
+pnpm dev
+
+# 构建生产版本
+pnpm build
+
+# 预览构建结果
+pnpm preview
+
+# 类型检查
+pnpm type-check
+
+# 代码检查
+pnpm lint
+
+# 代码格式化
+pnpm format
+```
+
+### 环境变量
+```bash
+# .env.local
+VITE_APP_TITLE=miniPaint
+VITE_API_BASE_URL=https://api.example.com
+VITE_ENABLE_ANALYTICS=true
+```
+
+## 🐛 调试和测试
+
+### 调试工具
+- **React DevTools**: 组件状态调试
+- **Zustand DevTools**: 状态管理调试
+- **Canvas Inspector**: Canvas 元素检查
+- **Performance Monitor**: 性能监控
+
+### 测试策略
+```typescript
+// 组件测试
+import { render, screen } from '@testing-library/react';
+import { ToolPanel } from './ToolPanel';
+
+test('renders tool panel with tools', () => {
+  render(<ToolPanel />);
+  expect(screen.getByRole('toolbar')).toBeInTheDocument();
+});
+
+// Hook 测试
+import { renderHook, act } from '@testing-library/react';
+import { useCanvas } from './useCanvas';
+
+test('initializes canvas correctly', () => {
+  const { result } = renderHook(() => useCanvas());
+  
+  act(() => {
+    const mockElement = document.createElement('canvas');
+    result.current.initCanvas(mockElement);
+  });
+  
+  expect(result.current.canvas).toBeTruthy();
 });
 ```
 
-### 2. PWA 支持
-- 实现 Service Worker
-- 支持离线使用
-- 添加到主屏幕功能
+## 📚 参考资源
 
-### 3. CDN 部署
-- 静态资源 CDN 加速
-- 图像处理 API 服务
-- 全球节点部署
+### 官方文档
+- [React 19 文档](https://react.dev/)
+- [Fabric.js 文档](http://fabricjs.com/docs/)
+- [Zustand 文档](https://github.com/pmndrs/zustand)
+- [UnoCSS 文档](https://unocss.dev/)
+- [Vite 文档](https://vitejs.dev/)
 
-## 预期成果
+### React 19 新特性
+- [React Compiler](https://react.dev/learn/react-compiler) - 自动优化组件
+- [Actions](https://react.dev/reference/rsc/use-server) - 服务器操作支持
+- [use() Hook](https://react.dev/reference/react/use) - 异步数据处理
+- [Concurrent Features](https://react.dev/blog/2022/03/29/react-v18) - 并发渲染优化
 
-### 性能提升
-- 启动速度提升 60%
-- 内存使用减少 40%
-- 渲染性能提升 50%
+### 最佳实践
+- [React 19 性能优化](https://react.dev/learn/render-and-commit)
+- [Canvas 性能优化](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas)
+- [Web Workers 使用指南](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)
 
-### 开发体验
-- TypeScript 类型安全
-- 热更新开发体验
-- 组件化架构便于维护
+---
 
-### 用户体验
-- 现代化 UI 设计
-- 响应式布局
-- 更好的移动端支持
-
-## 总结
-
-这个重构方案采用现代前端技术栈，保持了原有 miniPaint 的核心功能，同时大幅提升了性能、可维护性和用户体验。通过分阶段的开发计划，可以确保项目稳步推进，最终交付一个高质量的现代化图像编辑器。
+> 本文档会随着项目发展持续更新，请确保使用最新版本。
