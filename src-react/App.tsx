@@ -6,7 +6,7 @@ import PropertyPanel from '@/components/panels/PropertyPanel'
 import ColorPanel from '@/components/panels/ColorPanel'
 import EffectPanel from '@/components/panels/EffectPanel'
 import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
-import FeatureTestPanel from '@/components/FeatureTestPanel'
+// import FeatureTestPanel from '@/components/FeatureTestPanel'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CanvasArea from '@/components/canvas/CanvasArea'
 import { useUIStore } from '@/stores/ui'
@@ -16,12 +16,12 @@ const App: React.FC = () => {
   const { panelVisibility, togglePanel } = useUIStore()
   const {
     isMobile,
-    isTablet,
+    // isTablet,
     isDesktop,
     shouldShowPanel,
     getPanelWidth,
     getToolPanelWidth,
-    responsive
+    // responsive
   } = useResponsive()
 
   return (
@@ -121,7 +121,7 @@ const App: React.FC = () => {
           )}
 
           {/* 功能测试面板 (临时) */}
-          <FeatureTestPanel />
+          {/* <FeatureTestPanel /> */}
         </div>
       </div>
 
