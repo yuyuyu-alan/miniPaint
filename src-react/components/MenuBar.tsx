@@ -101,7 +101,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     if (!fabricCanvas) return
     
     const projectData = {
-      canvas: fabricCanvas.toJSON(['id', 'selectable']),
+      canvas: fabricCanvas.toJSON(),
       layers,
       metadata: {
         version: '2.0',
@@ -371,6 +371,7 @@ interface MenuDropdownProps {
       label?: string
       shortcut?: string
       action?: () => void
+      disabled?: boolean
       type?: 'divider'
     }>
   }
@@ -407,8 +408,13 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({ menu }) => {
             ) : (
               <button
                 key={index}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-100 transition-colors"
+                className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors ${
+                  item.disabled
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
                 onClick={() => handleItemClick(item.action)}
+                disabled={item.disabled}
               >
                 <span>{item.label}</span>
                 {item.shortcut && (
