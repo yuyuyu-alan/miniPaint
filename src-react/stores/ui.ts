@@ -92,14 +92,30 @@ export const useUIStore = create<UIStore>()(
         set({ sidebarCollapsed: collapsed })
       },
 
-      // 面板显示控制
+      // 面板显示控制 - 修复为单选模式
       togglePanel: (panel) => {
-        set((state) => ({
-          panelVisibility: {
-            ...state.panelVisibility,
-            [panel]: !state.panelVisibility[panel],
-          },
-        }))
+        set((state) => {
+          // 如果点击的是当前激活的面板，则关闭它
+          if (state.panelVisibility[panel]) {
+            return {
+              panelVisibility: {
+                ...state.panelVisibility,
+                [panel]: false,
+              },
+            }
+          } else {
+            // 否则关闭所有面板，只打开点击的面板
+            return {
+              panelVisibility: {
+                layers: panel === 'layers',
+                tools: state.panelVisibility.tools, // 工具面板保持不变
+                properties: panel === 'properties',
+                colors: panel === 'colors',
+                effects: panel === 'effects',
+              },
+            }
+          }
+        })
       },
 
       setPanelVisibility: (panel, visible) => {

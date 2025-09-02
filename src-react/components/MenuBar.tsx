@@ -379,6 +379,7 @@ interface MenuDropdownProps {
 
 const MenuDropdown: React.FC<MenuDropdownProps> = ({ menu }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const timeoutRef = React.useRef<number>()
 
   const handleItemClick = (action?: () => void) => {
     if (action) {
@@ -387,20 +388,56 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({ menu }) => {
     }
   }
 
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    setIsOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    // 添加延时，给用户时间移动到下拉菜单
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false)
+    }, 150) as unknown as number
+  }
+
+  const handleDropdownMouseEnter = () => {
+    // 鼠标进入下拉菜单时取消关闭
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+  }
+
+  const handleDropdownMouseLeave = () => {
+    // 鼠标离开下拉菜单时立即关闭
+    setIsOpen(false)
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
   return (
     <div className="relative">
       <button
         className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors"
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {menu.label}
       </button>
 
       {isOpen && (
-        <div 
+        <div
           className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-40"
-          onMouseLeave={() => setIsOpen(false)}
+          onMouseEnter={handleDropdownMouseEnter}
+          onMouseLeave={handleDropdownMouseLeave}
         >
           {menu.items.map((item, index) => (
             item.type === 'divider' ? (
