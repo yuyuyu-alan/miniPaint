@@ -71,7 +71,22 @@ const CanvasArea: React.FC = () => {
   useEffect(() => {
     if (canvasRef.current && !fabricCanvas) {
       try {
-        const canvas = initializeCanvas(canvasRef.current)
+        const element = canvasRef.current
+        
+        // 检查是否已经有Fabric实例
+        if ((element as any).__fabric || element.classList.contains('lower-canvas')) {
+          console.warn('Canvas element already initialized, skipping')
+          return
+        }
+        
+        // 检查是否有现有的Canvas实例
+        const existingCanvas = document.querySelector('.canvas-container canvas')
+        if (existingCanvas && existingCanvas !== element) {
+          console.warn('Another canvas instance exists, cleaning up')
+          return
+        }
+        
+        const canvas = initializeCanvas(element)
         
         // 设置基础事件监听
         canvas.on('selection:created', (e) => {

@@ -44,84 +44,97 @@ const App: React.FC = () => {
         {/* 中央画布区域 */}
         <CanvasArea />
 
-        {/* 右侧面板区域 */}
-        <div className={`flex-shrink-0 flex ${isMobile ? 'flex-col' : 'flex-row'}`}>
-          {/* 移动端面板切换按钮 */}
-          {isMobile && (
-            <div className="bg-white border-t border-gray-200 p-2 flex justify-around">
+        {/* 右侧面板区域 - Photoshop风格标签式面板 */}
+        <div className="flex-shrink-0 flex">
+          {/* 工具设置面板 */}
+          <div style={{ width: getPanelWidth() }}>
+            <ToolSettingsPanel />
+          </div>
+
+          {/* 主面板区域 - 标签式 */}
+          <div className="flex-shrink-0 flex flex-col bg-gray-100 border-l border-gray-300" style={{ width: getPanelWidth() }}>
+            {/* 面板标签栏 */}
+            <div className="bg-gray-200 border-b border-gray-300 flex">
               <button
                 onClick={() => togglePanel('layers')}
-                className={`px-3 py-2 rounded text-sm ${
-                  panelVisibility.layers ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
+                  panelVisibility.layers
+                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 图层
               </button>
               <button
                 onClick={() => togglePanel('colors')}
-                className={`px-3 py-2 rounded text-sm ${
-                  panelVisibility.colors ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
+                  panelVisibility.colors
+                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 颜色
               </button>
               <button
+                onClick={() => togglePanel('properties')}
+                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
+                  panelVisibility.properties
+                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                属性
+              </button>
+              <button
                 onClick={() => togglePanel('effects')}
-                className={`px-3 py-2 rounded text-sm ${
-                  panelVisibility.effects ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+                className={`px-3 py-2 text-sm transition-colors ${
+                  panelVisibility.effects
+                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 效果
               </button>
             </div>
-          )}
 
-          {/* 工具设置面板 */}
-          {!isMobile && (
-            <div style={{ width: getPanelWidth() }}>
-              <ToolSettingsPanel />
-            </div>
-          )}
-          
-          {/* 图层面板 */}
-          {(panelVisibility.layers || (isDesktop && shouldShowPanel('layers'))) && (
-            <div
-              className={isMobile ? 'w-full' : ''}
-              style={!isMobile ? { width: getPanelWidth() } : {}}
-            >
-              <LayerPanel />
-            </div>
-          )}
-          
-          {/* 属性面板 */}
-          {panelVisibility.properties && isDesktop && (
-            <div style={{ width: getPanelWidth() }}>
-              <PropertyPanel />
-            </div>
-          )}
-          
-          {/* 颜色面板 */}
-          {(panelVisibility.colors || (isDesktop && shouldShowPanel('colors'))) && (
-            <div
-              className={isMobile ? 'w-full' : ''}
-              style={!isMobile ? { width: getPanelWidth() } : {}}
-            >
-              <ColorPanel />
-            </div>
-          )}
-          
-          {/* 效果面板 */}
-          {(panelVisibility.effects || (isDesktop && shouldShowPanel('effects'))) && (
-            <div
-              className={isMobile ? 'w-full' : ''}
-              style={!isMobile ? { width: getPanelWidth() } : {}}
-            >
-              <EffectPanel />
-            </div>
-          )}
+            {/* 面板内容区域 */}
+            <div className="flex-1 bg-white overflow-hidden">
+              {/* 图层面板 */}
+              {panelVisibility.layers && (
+                <div className="h-full">
+                  <LayerPanel />
+                </div>
+              )}
+              
+              {/* 颜色面板 */}
+              {panelVisibility.colors && (
+                <div className="h-full">
+                  <ColorPanel />
+                </div>
+              )}
+              
+              {/* 属性面板 */}
+              {panelVisibility.properties && (
+                <div className="h-full">
+                  <PropertyPanel />
+                </div>
+              )}
+              
+              {/* 效果面板 */}
+              {panelVisibility.effects && (
+                <div className="h-full">
+                  <EffectPanel />
+                </div>
+              )}
 
-          {/* 功能测试面板 (临时) */}
-          {/* <FeatureTestPanel /> */}
+              {/* 默认显示图层面板 */}
+              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.properties && !panelVisibility.effects && (
+                <div className="h-full">
+                  <LayerPanel />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

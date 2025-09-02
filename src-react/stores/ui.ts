@@ -42,11 +42,11 @@ export const useUIStore = create<UIStore>()(
       theme: 'auto',
       sidebarCollapsed: false,
       panelVisibility: {
-        layers: true,
-        tools: true,
-        properties: true,
-        colors: true,
-        effects: true,
+        layers: true,      // 默认显示图层面板
+        tools: true,       // 始终显示工具面板
+        properties: false, // 默认隐藏属性面板
+        colors: false,     // 默认隐藏颜色面板
+        effects: false,    // 默认隐藏效果面板
       },
       modalOpen: null,
       
