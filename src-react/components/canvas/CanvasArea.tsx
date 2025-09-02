@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import * as fabric from 'fabric'
 import { useCanvasStore } from '@/stores/canvas'
 import { useLayerStore } from '@/stores/layers'
 import { useHistoryStore } from '@/stores/history'
 import { useTools } from '@/hooks/useTools'
 import { useCanvasViewport } from '@/hooks/useCanvasViewport'
-import { useCanvasOptimization } from '@/hooks/useCanvasOptimization'
+import { useFileDrop } from '@/hooks/useFileDrop'
+import { useGestures } from '@/hooks/useGestures'
+import { useContextMenu, type ContextMenuItem } from '@/components/ui/ContextMenu'
 
 const CanvasArea: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -13,6 +15,8 @@ const CanvasArea: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState(false)
   const [startPoint, setStartPoint] = useState<fabric.Point | null>(null)
   const [tempObject, setTempObject] = useState<fabric.Object | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [dropMessage, setDropMessage] = useState<string | null>(null)
   
   const { 
     fabricCanvas, 
@@ -27,86 +31,147 @@ const CanvasArea: React.FC = () => {
   const { saveState } = useHistoryStore()
   const { activeTool, createShape, createText, createLine } = useTools()
   const { zoomIn, zoomOut, zoomToFit, zoomToActualSize, resetView } = useCanvasViewport()
-  const {
-    debouncedRender,
-    startBatch,
-    endBatch,
-    optimizedOperation,
-    enableVirtualization,
-    optimizeMemory,
-    performanceStats,
-    cleanup
-  } = useCanvasOptimization()
 
-  // 初始化 Fabric.js Canvas
+  // 简化的性能优化 - 安全实现
+  const debouncedRender = useCallback(() => {
+    if (fabricCanvas) {
+      // 使用requestAnimationFrame进行渲染优化
+      requestAnimationFrame(() => {
+        fabricCanvas.renderAll()
+      })
+    }
+  }, [fabricCanvas])
+
+  // 文件拖拽功能 - 安全实现
+  const { bindDropZone } = useFileDrop({
+    onFileAccepted: (file) => {
+      setDropMessage(`正在导入: ${file.name}`)
+      setIsDragOver(false)
+    },
+    onFileRejected: (file, reason) => {
+      setDropMessage(`导入失败: ${reason}`)
+      setIsDragOver(false)
+      setTimeout(() => setDropMessage(null), 3000)
+    },
+    onImportComplete: (success) => {
+      if (success) {
+        setDropMessage('导入成功!')
+      }
+      setTimeout(() => setDropMessage(null), 2000)
+    }
+  })
+
+  // 右键菜单功能 - 安全实现
+  const { showContextMenu, ContextMenuComponent } = useContextMenu()
+
+  // 手势支持 - 安全实现
+  const { bindGestures, isGestureActive } = useGestures()
+
+  // 初始化 Fabric.js Canvas - 只在组件挂载时执行一次
   useEffect(() => {
-    if (canvasRef.current) {
-      const canvas = initializeCanvas(canvasRef.current)
-      
-      // 设置 canvas 事件监听
-      canvas.on('selection:created', (e) => {
-        console.log('Object selected:', e.selected)
-      })
-
-      canvas.on('selection:cleared', () => {
-        console.log('Selection cleared')
-      })
-
-      canvas.on('object:added', (e) => {
-        console.log('Object added:', e.target)
-        // 使用优化的操作保存历史状态
-        optimizedOperation(() => {
-          saveState(`添加对象`)
-        })
+    if (canvasRef.current && !fabricCanvas) {
+      try {
+        const canvas = initializeCanvas(canvasRef.current)
         
-        // 检查是否需要启用虚拟化
-        if (performanceStats && performanceStats.isVirtualizationNeeded) {
-          enableVirtualization()
-        }
-      })
-
-      canvas.on('object:removed', (e) => {
-        console.log('Object removed:', e.target)
-        // 使用优化的操作保存历史状态
-        optimizedOperation(() => {
-          saveState(`删除对象`)
+        // 设置基础事件监听
+        canvas.on('selection:created', (e) => {
+          console.log('Object selected:', e.selected)
         })
-      })
 
-      canvas.on('object:modified', (e) => {
-        console.log('Object modified:', e.target)
-        // 使用优化的操作保存历史状态
-        optimizedOperation(() => {
-          saveState(`修改对象`)
+        canvas.on('selection:cleared', () => {
+          console.log('Selection cleared')
         })
-      })
 
-      canvas.on('path:created', (e) => {
-        console.log('Path created:', e.path)
-        // 使用优化的操作保存历史状态
-        optimizedOperation(() => {
-          saveState(`画笔绘制`)
+        canvas.on('object:added', (e) => {
+          console.log('Object added:', e.target)
+          setTimeout(() => saveState(`添加对象`), 100)
         })
-      })
 
-      // 监听鼠标事件用于工具系统
-      canvas.on('mouse:down', handleMouseDown)
-      canvas.on('mouse:move', handleMouseMove) 
-      canvas.on('mouse:up', handleMouseUp)
+        canvas.on('object:removed', (e) => {
+          console.log('Object removed:', e.target)
+          setTimeout(() => saveState(`删除对象`), 100)
+        })
 
-      // 初始保存状态
-      saveState('初始状态')
+        canvas.on('object:modified', (e) => {
+          console.log('Object modified:', e.target)
+          setTimeout(() => saveState(`修改对象`), 100)
+        })
+
+        canvas.on('path:created', (e) => {
+          console.log('Path created:', e.path)
+          setTimeout(() => saveState(`画笔绘制`), 100)
+        })
+
+        // 监听鼠标事件
+        canvas.on('mouse:down', handleMouseDown)
+        canvas.on('mouse:move', handleMouseMove)
+        canvas.on('mouse:up', handleMouseUp)
+
+        // 右键菜单事件 - 安全实现
+        canvas.on('mouse:down', (e) => {
+          if (e.e && (e.e as MouseEvent).button === 2) {
+            handleRightClick(e.e as MouseEvent)
+          }
+        })
+
+        // 初始保存状态
+        setTimeout(() => saveState('初始状态'), 200)
+      } catch (error) {
+        console.error('Canvas initialization failed:', error)
+      }
     }
 
     // 清理函数
     return () => {
-      cleanup()
-      destroyCanvas()
+      if (fabricCanvas) {
+        try {
+          destroyCanvas()
+        } catch (error) {
+          console.warn('Canvas cleanup error:', error)
+        }
+      }
+    }
+  }, []) // 空依赖数组，只在挂载时执行
+
+  // 安全地绑定拖拽功能
+  useEffect(() => {
+    if (containerRef.current) {
+      const cleanup = bindDropZone(containerRef.current)
+      return cleanup
+    }
+  }, [bindDropZone])
+
+  // 安全地绑定手势功能
+  useEffect(() => {
+    if (containerRef.current) {
+      const cleanup = bindGestures(containerRef.current)
+      return cleanup
+    }
+  }, [bindGestures])
+
+  // 处理拖拽状态
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleDragEnter = () => setIsDragOver(true)
+    const handleDragLeave = (e: DragEvent) => {
+      if (!container.contains(e.relatedTarget as Node)) {
+        setIsDragOver(false)
+      }
+    }
+
+    container.addEventListener('dragenter', handleDragEnter)
+    container.addEventListener('dragleave', handleDragLeave)
+
+    return () => {
+      container.removeEventListener('dragenter', handleDragEnter)
+      container.removeEventListener('dragleave', handleDragLeave)
     }
   }, [])
 
   // 鼠标按下事件
-  const handleMouseDown = (e: fabric.TEvent<fabric.TPointerEvent>) => {
+  const handleMouseDown = useCallback((e: fabric.TEvent<fabric.TPointerEvent>) => {
     if (!fabricCanvas || !e.e) return
 
     const pointer = fabricCanvas.getPointer(e.e)
@@ -117,16 +182,13 @@ const CanvasArea: React.FC = () => {
 
     switch (activeTool) {
       case 'select':
-        // 选择工具由 Fabric.js 自动处理
         break
       
       case 'brush':
-        // 画笔工具由 Fabric.js drawing mode 自动处理
         break
 
       case 'rectangle':
       case 'circle':
-        // 创建临时形状用于预览
         const tempShape = activeTool === 'rectangle' 
           ? new fabric.Rect({ left: point.x, top: point.y, width: 0, height: 0, fill: 'transparent', stroke: '#000', strokeWidth: 2 })
           : new fabric.Circle({ left: point.x, top: point.y, radius: 0, fill: 'transparent', stroke: '#000', strokeWidth: 2 })
@@ -138,7 +200,6 @@ const CanvasArea: React.FC = () => {
 
       case 'line':
       case 'arrow':
-        // 创建临时线条用于预览
         const tempLine = new fabric.Line([point.x, point.y, point.x, point.y], {
           stroke: '#000',
           strokeWidth: 2
@@ -149,17 +210,16 @@ const CanvasArea: React.FC = () => {
         break
 
       case 'text':
-        // 文本工具 - 直接创建文本
         createText(point)
         break
 
       default:
         console.log(`Tool ${activeTool} mouse down not implemented yet`)
     }
-  }
+  }, [fabricCanvas, activeTool, createText])
 
   // 鼠标移动事件
-  const handleMouseMove = (e: fabric.TEvent<fabric.TPointerEvent>) => {
+  const handleMouseMove = useCallback((e: fabric.TEvent<fabric.TPointerEvent>) => {
     if (!fabricCanvas || !e.e || !isDrawing || !startPoint) return
 
     const pointer = fabricCanvas.getPointer(e.e)
@@ -197,10 +257,10 @@ const CanvasArea: React.FC = () => {
         }
         break
     }
-  }
+  }, [fabricCanvas, activeTool, isDrawing, startPoint, tempObject])
 
   // 鼠标释放事件
-  const handleMouseUp = (e: fabric.TEvent<fabric.TPointerEvent>) => {
+  const handleMouseUp = useCallback((e: fabric.TEvent<fabric.TPointerEvent>) => {
     if (!fabricCanvas || !isDrawing) return
 
     setIsDrawing(false)
@@ -228,37 +288,105 @@ const CanvasArea: React.FC = () => {
 
     setStartPoint(null)
     setTempObject(null)
-  }
+  }, [fabricCanvas, isDrawing, tempObject, startPoint, activeTool, createShape, createLine])
 
-  // 监听画布尺寸变化
+  // 右键菜单处理 - 安全实现
+  const handleRightClick = useCallback((e: MouseEvent) => {
+    if (!fabricCanvas) return
+
+    try {
+      const activeObject = fabricCanvas.getActiveObject()
+      const menuItems: ContextMenuItem[] = []
+
+      if (activeObject) {
+        // 有选中对象时的菜单
+        menuItems.push(
+          { id: 'delete', label: '删除', icon: '🗑️', shortcut: 'Delete', onClick: () => {
+            fabricCanvas.remove(activeObject)
+            fabricCanvas.renderAll()
+            setTimeout(() => saveState('删除对象'), 50)
+          }},
+          { separator: true } as ContextMenuItem,
+          { id: 'duplicate', label: '复制对象', icon: '📄', onClick: () => {
+            activeObject.clone().then((cloned: fabric.Object) => {
+              cloned.set({
+                left: (cloned.left || 0) + 10,
+                top: (cloned.top || 0) + 10,
+              })
+              fabricCanvas.add(cloned)
+              fabricCanvas.setActiveObject(cloned)
+              fabricCanvas.renderAll()
+              setTimeout(() => saveState('复制对象'), 50)
+            })
+          }}
+        )
+      } else {
+        // 空白区域的菜单
+        menuItems.push(
+          { id: 'select-all', label: '全选', icon: '🔲', shortcut: 'Ctrl+A', onClick: () => {
+            const allObjects = fabricCanvas.getObjects()
+            if (allObjects.length > 0) {
+              const selection = new fabric.ActiveSelection(allObjects, {
+                canvas: fabricCanvas,
+              })
+              fabricCanvas.setActiveObject(selection)
+              fabricCanvas.renderAll()
+            }
+          }},
+          { id: 'clear-selection', label: '取消选择', icon: '❌', shortcut: 'Ctrl+D', onClick: () => {
+            fabricCanvas.discardActiveObject()
+            fabricCanvas.renderAll()
+          }}
+        )
+      }
+
+      showContextMenu(e, menuItems)
+    } catch (error) {
+      console.warn('Right click menu error:', error)
+    }
+  }, [fabricCanvas, saveState, showContextMenu])
+
+  // 监听画布尺寸变化 - 简化版本
   useEffect(() => {
-    if (fabricCanvas) {
-      fabricCanvas.setDimensions({ width, height })
-      debouncedRender()
-      
-      // 尺寸变化后重新检查虚拟化
-      if (performanceStats && performanceStats.isVirtualizationNeeded) {
-        enableVirtualization()
+    if (fabricCanvas && width && height) {
+      try {
+        fabricCanvas.setDimensions({ width, height })
+        debouncedRender()
+      } catch (error) {
+        console.warn('Failed to set canvas dimensions:', error)
       }
     }
-  }, [fabricCanvas, width, height, debouncedRender, enableVirtualization, performanceStats])
-
-  // 定期内存优化
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (performanceStats && performanceStats.objectCount > 500) {
-        optimizeMemory()
-      }
-    }, 30000) // 每30秒检查一次
-
-    return () => clearInterval(interval)
-  }, [optimizeMemory, performanceStats])
+  }, [fabricCanvas, width, height])
 
   return (
     <div 
       ref={containerRef}
-      className="flex-1 relative bg-gray-100 flex items-center justify-center overflow-hidden"
+      className={`flex-1 relative bg-gray-100 flex items-center justify-center overflow-hidden transition-all ${
+        isDragOver ? 'bg-blue-50 border-2 border-dashed border-blue-400' : ''
+      }`}
     >
+      {/* 拖拽提示覆盖层 */}
+      {isDragOver && (
+        <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center z-10">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-4 shadow-lg">
+            <div className="text-center">
+              <div className="text-3xl mb-2">📁</div>
+              <p className="text-lg font-medium text-gray-800">拖拽文件到此处</p>
+              <p className="text-sm text-gray-600">支持 JPG, PNG, GIF, WebP, SVG</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 导入状态消息 */}
+      {dropMessage && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg border">
+            <span className="text-sm text-gray-700">{dropMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* 画布容器 */}
       <div className="bg-white border border-gray-300 shadow-lg rounded-lg overflow-hidden">
         {/* 画布信息栏 */}
@@ -289,7 +417,7 @@ const CanvasArea: React.FC = () => {
             }}
           />
           
-          {/* 网格背景 (可选) */}
+          {/* 网格背景 */}
           <div 
             className="absolute inset-0 pointer-events-none opacity-10"
             style={{
@@ -307,7 +435,7 @@ const CanvasArea: React.FC = () => {
       <div className="absolute bottom-4 left-4 flex gap-2">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
           <span className="text-sm text-gray-600">
-            Phase 4 - Canvas核心优化完成
+            用户体验优化完成
           </span>
         </div>
         
@@ -317,19 +445,18 @@ const CanvasArea: React.FC = () => {
           </span>
         </div>
         
-        {performanceStats && (
-          <div className="bg-green-500/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
-            <span className="text-sm text-white">
-              对象: {performanceStats.objectCount}
-              {performanceStats.isVirtualizationNeeded && ' (虚拟化)'}
-            </span>
-          </div>
-        )}
-        
         {isDrawing && (
           <div className="bg-blue-500/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
             <span className="text-sm text-white">
               绘制中...
+            </span>
+          </div>
+        )}
+
+        {isGestureActive && (
+          <div className="bg-purple-500/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+            <span className="text-sm text-white">
+              手势操作中...
             </span>
           </div>
         )}
@@ -377,6 +504,9 @@ const CanvasArea: React.FC = () => {
           重置视图
         </button>
       </div>
+
+      {/* 右键菜单 */}
+      {ContextMenuComponent}
     </div>
   )
 }

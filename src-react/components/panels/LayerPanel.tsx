@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useLayerStore } from '@/stores/layers'
 import { Button, Input } from '@/components/ui'
 
@@ -13,11 +13,14 @@ const LayerPanel: React.FC = () => {
     toggleLayerVisibility,
     moveLayerUp,
     moveLayerDown,
+    moveLayer,
     duplicateLayer,
   } = useLayerStore()
 
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [draggedLayer, setDraggedLayer] = useState<string | null>(null)
+  const [dragOverLayer, setDragOverLayer] = useState<string | null>(null)
 
   const handleAddLayer = () => {
     const newLayerId = addLayer({
@@ -66,6 +69,45 @@ const LayerPanel: React.FC = () => {
     }
   }
 
+  // 拖拽处理函数
+  const handleDragStart = (e: React.DragEvent, layerId: string) => {
+    setDraggedLayer(layerId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', layerId)
+  }
+
+  const handleDragOver = (e: React.DragEvent, layerId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverLayer(layerId)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverLayer(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedLayer(null)
+    setDragOverLayer(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, targetLayerId: string) => {
+    e.preventDefault()
+    
+    const sourceLayerId = e.dataTransfer.getData('text/plain')
+    if (sourceLayerId === targetLayerId) return
+
+    const sourceIndex = layers.findIndex(layer => layer.id === sourceLayerId)
+    const targetIndex = layers.findIndex(layer => layer.id === targetLayerId)
+    
+    if (sourceIndex !== -1 && targetIndex !== -1) {
+      moveLayer(sourceLayerId, targetIndex)
+    }
+
+    setDraggedLayer(null)
+    setDragOverLayer(null)
+  }
+
   return (
     <div className="w-64 bg-white border-l border-gray-200 flex flex-col h-full">
       {/* 头部 */}
@@ -90,18 +132,35 @@ const LayerPanel: React.FC = () => {
           {layers.map((layer, index) => (
             <div
               key={layer.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, layer.id)}
+              onDragOver={(e) => handleDragOver(e, layer.id)}
+              onDragLeave={handleDragLeave}
+              onDragEnd={handleDragEnd}
+              onDrop={(e) => handleDrop(e, layer.id)}
               className={`
-                group p-3 rounded-lg cursor-pointer transition-all border-2
+                group p-3 rounded-lg cursor-pointer transition-all border-2 relative
                 ${layer.id === activeLayerId
                   ? 'bg-primary-50 border-primary-200 shadow-sm'
                   : 'bg-gray-50 border-transparent hover:bg-gray-100'
                 }
+                ${draggedLayer === layer.id ? 'opacity-50' : ''}
+                ${dragOverLayer === layer.id ? 'border-blue-400 bg-blue-50' : ''}
               `}
               onClick={() => setActiveLayer(layer.id)}
             >
+              {/* 拖拽指示器 */}
+              {dragOverLayer === layer.id && (
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-400"></div>
+              )}
               {/* 图层信息行 */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {/* 拖拽手柄 */}
+                  <div className="cursor-move text-gray-400 hover:text-gray-600 px-1">
+                    ⋮⋮
+                  </div>
+                  
                   {/* 可见性切换 */}
                   <button
                     onClick={(e) => {
