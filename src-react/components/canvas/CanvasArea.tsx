@@ -5,6 +5,7 @@ import { useLayerStore } from '@/stores/layers'
 import { useHistoryStore } from '@/stores/history'
 import { useTools } from '@/hooks/useTools'
 import { useCanvasViewport } from '@/hooks/useCanvasViewport'
+import { useCanvasOptimization } from '@/hooks/useCanvasOptimization'
 
 const CanvasArea: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -26,6 +27,16 @@ const CanvasArea: React.FC = () => {
   const { saveState } = useHistoryStore()
   const { activeTool, createShape, createText, createLine } = useTools()
   const { zoomIn, zoomOut, zoomToFit, zoomToActualSize, resetView } = useCanvasViewport()
+  const {
+    debouncedRender,
+    startBatch,
+    endBatch,
+    optimizedOperation,
+    enableVirtualization,
+    optimizeMemory,
+    performanceStats,
+    cleanup
+  } = useCanvasOptimization()
 
   // 初始化 Fabric.js Canvas
   useEffect(() => {
@@ -43,26 +54,39 @@ const CanvasArea: React.FC = () => {
 
       canvas.on('object:added', (e) => {
         console.log('Object added:', e.target)
-        // 保存历史状态
-        saveState(`添加对象`)
+        // 使用优化的操作保存历史状态
+        optimizedOperation(() => {
+          saveState(`添加对象`)
+        })
+        
+        // 检查是否需要启用虚拟化
+        if (performanceStats && performanceStats.isVirtualizationNeeded) {
+          enableVirtualization()
+        }
       })
 
       canvas.on('object:removed', (e) => {
         console.log('Object removed:', e.target)
-        // 保存历史状态
-        saveState(`删除对象`)
+        // 使用优化的操作保存历史状态
+        optimizedOperation(() => {
+          saveState(`删除对象`)
+        })
       })
 
       canvas.on('object:modified', (e) => {
         console.log('Object modified:', e.target)
-        // 保存历史状态
-        saveState(`修改对象`)
+        // 使用优化的操作保存历史状态
+        optimizedOperation(() => {
+          saveState(`修改对象`)
+        })
       })
 
       canvas.on('path:created', (e) => {
         console.log('Path created:', e.path)
-        // 保存历史状态
-        saveState(`画笔绘制`)
+        // 使用优化的操作保存历史状态
+        optimizedOperation(() => {
+          saveState(`画笔绘制`)
+        })
       })
 
       // 监听鼠标事件用于工具系统
@@ -76,6 +100,7 @@ const CanvasArea: React.FC = () => {
 
     // 清理函数
     return () => {
+      cleanup()
       destroyCanvas()
     }
   }, [])
@@ -108,7 +133,7 @@ const CanvasArea: React.FC = () => {
         
         fabricCanvas.add(tempShape)
         setTempObject(tempShape)
-        fabricCanvas.renderAll()
+        debouncedRender()
         break
 
       case 'line':
@@ -120,7 +145,7 @@ const CanvasArea: React.FC = () => {
         })
         fabricCanvas.add(tempLine)
         setTempObject(tempLine)
-        fabricCanvas.renderAll()
+        debouncedRender()
         break
 
       case 'text':
@@ -149,7 +174,7 @@ const CanvasArea: React.FC = () => {
           const top = Math.min(startPoint.y, currentPoint.y)
           
           tempObject.set({ left, top, width, height })
-          fabricCanvas.renderAll()
+          debouncedRender()
         }
         break
 
@@ -160,7 +185,7 @@ const CanvasArea: React.FC = () => {
           const top = startPoint.y
           
           tempObject.set({ left, top, radius })
-          fabricCanvas.renderAll()
+          debouncedRender()
         }
         break
 
@@ -168,7 +193,7 @@ const CanvasArea: React.FC = () => {
       case 'arrow':
         if (tempObject && tempObject instanceof fabric.Line) {
           tempObject.set({ x2: currentPoint.x, y2: currentPoint.y })
-          fabricCanvas.renderAll()
+          debouncedRender()
         }
         break
     }
@@ -209,9 +234,25 @@ const CanvasArea: React.FC = () => {
   useEffect(() => {
     if (fabricCanvas) {
       fabricCanvas.setDimensions({ width, height })
-      fabricCanvas.renderAll()
+      debouncedRender()
+      
+      // 尺寸变化后重新检查虚拟化
+      if (performanceStats && performanceStats.isVirtualizationNeeded) {
+        enableVirtualization()
+      }
     }
-  }, [fabricCanvas, width, height])
+  }, [fabricCanvas, width, height, debouncedRender, enableVirtualization, performanceStats])
+
+  // 定期内存优化
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (performanceStats && performanceStats.objectCount > 500) {
+        optimizeMemory()
+      }
+    }, 30000) // 每30秒检查一次
+
+    return () => clearInterval(interval)
+  }, [optimizeMemory, performanceStats])
 
   return (
     <div 
@@ -266,7 +307,7 @@ const CanvasArea: React.FC = () => {
       <div className="absolute bottom-4 left-4 flex gap-2">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
           <span className="text-sm text-gray-600">
-            Phase 5 - 效果系统完成
+            Phase 4 - Canvas核心优化完成
           </span>
         </div>
         
@@ -275,6 +316,15 @@ const CanvasArea: React.FC = () => {
             当前工具: {activeTool || 'select'}
           </span>
         </div>
+        
+        {performanceStats && (
+          <div className="bg-green-500/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+            <span className="text-sm text-white">
+              对象: {performanceStats.objectCount}
+              {performanceStats.isVirtualizationNeeded && ' (虚拟化)'}
+            </span>
+          </div>
+        )}
         
         {isDrawing && (
           <div className="bg-blue-500/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">

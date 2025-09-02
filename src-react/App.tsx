@@ -5,6 +5,9 @@ import LayerPanel from '@/components/panels/LayerPanel'
 import PropertyPanel from '@/components/panels/PropertyPanel'
 import ColorPanel from '@/components/panels/ColorPanel'
 import EffectPanel from '@/components/panels/EffectPanel'
+import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
+import TestPanel from '@/components/TestPanel'
+import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CanvasArea from '@/components/canvas/CanvasArea'
 import { useUIStore } from '@/stores/ui'
 
@@ -30,6 +33,9 @@ const App: React.FC = () => {
 
         {/* 右侧面板区域 */}
         <div className="flex-shrink-0 flex">
+          {/* 工具设置面板 */}
+          <ToolSettingsPanel />
+          
           {/* 图层面板 */}
           {panelVisibility.layers && (
             <LayerPanel />
@@ -49,8 +55,14 @@ const App: React.FC = () => {
           {panelVisibility.effects && (
             <EffectPanel />
           )}
+          
+          {/* 测试面板 (开发时使用) */}
+          <TestPanel />
         </div>
       </div>
+
+      {/* 键盘快捷键帮助 */}
+      <KeyboardShortcuts />
     </div>
   )
 }

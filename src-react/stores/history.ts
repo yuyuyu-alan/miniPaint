@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import * as fabric from 'fabric'
 import type { Layer } from '@/types'
+import { useCanvasStore } from './canvas'
+import { useLayerStore } from './layers'
 
 interface HistoryState {
   canvasState: any
@@ -55,14 +57,17 @@ export const useHistoryStore = create<HistoryStore>()(
       // 如果正在撤销/重做或批量操作中，不保存状态
       if (isUndoRedoing || isBatching) return
       
-      // 获取当前 canvas 和 layers 状态
-      const { fabricCanvas } = (window as any).__canvasStore || {}
-      const { layers } = (window as any).__layerStore || {}
+      // 直接从store获取状态
+      const { fabricCanvas } = useCanvasStore.getState()
+      const { layers } = useLayerStore.getState()
       
-      if (!fabricCanvas) return
+      if (!fabricCanvas) {
+        console.warn('Canvas not available for history save')
+        return
+      }
       
       const newState: HistoryState = {
-        canvasState: fabricCanvas.toJSON(['id', 'selectable', 'evented']),
+        canvasState: fabricCanvas.toJSON(),
         layerStates: JSON.parse(JSON.stringify(layers || [])),
         timestamp: Date.now(),
         description
@@ -75,6 +80,13 @@ export const useHistoryStore = create<HistoryStore>()(
       // 限制历史记录大小
       if (newHistory.length > maxHistorySize) {
         newHistory.shift()
+      } else {
+        // 只有在没有删除旧记录时才更新索引
+        set({
+          history: newHistory,
+          currentIndex: newHistory.length - 1
+        })
+        return
       }
       
       set({
@@ -175,20 +187,22 @@ export const useHistoryStore = create<HistoryStore>()(
 
 // 恢复状态的辅助函数
 const restoreState = (state: HistoryState) => {
-  const { fabricCanvas } = (window as any).__canvasStore || {}
-  const { setLayers } = (window as any).__layerStore || {}
+  const { fabricCanvas } = useCanvasStore.getState()
+  const { setLayers } = useLayerStore.getState()
   
-  if (!fabricCanvas) return
+  if (!fabricCanvas) {
+    console.warn('Canvas not available for state restore')
+    return
+  }
   
   // 恢复 canvas 状态
   fabricCanvas.loadFromJSON(state.canvasState, () => {
     fabricCanvas?.renderAll()
+    console.log(`恢复状态: ${state.description} (${new Date(state.timestamp).toLocaleTimeString()})`)
   })
   
   // 恢复图层状态
-  if (setLayers) {
+  if (state.layerStates && state.layerStates.length > 0) {
     setLayers(state.layerStates)
   }
-  
-  console.log(`恢复状态: ${state.description} (${new Date(state.timestamp).toLocaleTimeString()})`)
 }

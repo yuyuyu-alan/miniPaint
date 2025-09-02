@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTools, getToolIcon, getToolName } from '@/hooks/useTools'
-import { Button } from '@/components/ui'
+import { Button, Tooltip } from '@/components/ui'
 import type { ToolType } from '@/types'
 
 const tools: ToolType[] = [
@@ -32,26 +32,30 @@ const ToolPanel: React.FC = () => {
           const shortcut = shortcutKeys[toolType]
           
           return (
-            <button
+            <Tooltip
               key={toolType}
-              onClick={() => handleToolSelect(toolType)}
-              className={`
-                w-12 h-12 flex flex-col items-center justify-center rounded-lg transition-all group
-                ${activeTool === toolType 
-                  ? 'bg-primary-100 text-primary-700 border-2 border-primary-300 shadow-sm' 
-                  : 'hover:bg-gray-100 text-gray-600 border-2 border-transparent'
-                }
-              `}
-              title={`${toolName} (${shortcut})`}
+              content={`${toolName} (快捷键: ${shortcut})`}
+              position="right"
             >
-              {/* 使用 Lucide 图标或 emoji 回退 */}
-              <div className="text-lg flex items-center justify-center">
-                <i className={`lucide-${iconName}`} style={{ fontSize: '16px' }} />
-              </div>
-              <span className="text-xs mt-0.5 opacity-60 group-hover:opacity-80">
-                {shortcut}
-              </span>
-            </button>
+              <button
+                onClick={() => handleToolSelect(toolType)}
+                className={`
+                  w-12 h-12 flex flex-col items-center justify-center rounded-lg transition-all group
+                  ${activeTool === toolType
+                    ? 'bg-primary-100 text-primary-700 border-2 border-primary-300 shadow-sm'
+                    : 'hover:bg-gray-100 text-gray-600 border-2 border-transparent'
+                  }
+                `}
+              >
+                {/* 使用 Lucide 图标或 emoji 回退 */}
+                <div className="text-lg flex items-center justify-center">
+                  <i className={`lucide-${iconName}`} style={{ fontSize: '16px' }} />
+                </div>
+                <span className="text-xs mt-0.5 opacity-60 group-hover:opacity-80">
+                  {shortcut}
+                </span>
+              </button>
+            </Tooltip>
           )
         })}
       </div>
@@ -61,12 +65,13 @@ const ToolPanel: React.FC = () => {
       
       {/* 工具设置按钮 */}
       <div className="p-2">
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600"
-          title="工具设置"
-        >
-          <i className="lucide-settings" style={{ fontSize: '16px' }} />
-        </button>
+        <Tooltip content="工具设置" position="right">
+          <button
+            className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600"
+          >
+            <i className="lucide-settings" style={{ fontSize: '16px' }} />
+          </button>
+        </Tooltip>
       </div>
       
       {/* 当前工具信息 */}

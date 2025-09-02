@@ -16,7 +16,7 @@ export const useHistory = (options: UseHistoryOptions = {}) => {
   
   const [history, setHistory] = useState<HistoryState[]>([])
   const [currentIndex, setCurrentIndex] = useState(-1)
-  const debounceTimer = useRef<NodeJS.Timeout>()
+  const debounceTimer = useRef<number>()
 
   // 保存当前状态到历史记录
   const saveState = useCallback((description?: string) => {
@@ -29,9 +29,7 @@ export const useHistory = (options: UseHistoryOptions = {}) => {
 
     // 使用防抖来避免过于频繁的历史记录保存
     debounceTimer.current = setTimeout(() => {
-      const canvasState = fabricCanvas.toJSON([
-        'id', 'selectable', 'evented', 'excludeFromExport'
-      ])
+      const canvasState = fabricCanvas.toJSON()
       
       const historyState: HistoryState = {
         canvasState,
@@ -69,9 +67,7 @@ export const useHistory = (options: UseHistoryOptions = {}) => {
       clearTimeout(debounceTimer.current)
     }
 
-    const canvasState = fabricCanvas.toJSON([
-      'id', 'selectable', 'evented', 'excludeFromExport'
-    ])
+    const canvasState = fabricCanvas.toJSON()
     
     const historyState: HistoryState = {
       canvasState,
@@ -105,8 +101,10 @@ export const useHistory = (options: UseHistoryOptions = {}) => {
     })
 
     // 恢复图层状态
-    // TODO: 实现图层状态恢复
-    // useLayerStore.setState({ layers: historyState.layerStates })
+    const { setLayers } = useLayerStore.getState()
+    if (historyState.layerStates && historyState.layerStates.length > 0) {
+      setLayers(historyState.layerStates)
+    }
   }, [fabricCanvas])
 
   // 撤销操作

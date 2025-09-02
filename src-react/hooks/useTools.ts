@@ -1,25 +1,48 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useCanvasStore } from '@/stores/canvas'
 import { useToolStore } from '@/stores/tools'
 import { useUIStore } from '@/stores/ui'
 import type { ToolType } from '@/types'
 import * as fabric from 'fabric'
+import { CropTool } from '@/tools/CropTool'
+import { FillTool } from '@/tools/FillTool'
+import { EraseTool } from '@/tools/EraseTool'
+import { CloneTool } from '@/tools/CloneTool'
 
 export const useTools = () => {
   const { fabricCanvas } = useCanvasStore()
-  const { 
-    activeTool, 
-    toolSettings, 
-    setActiveTool, 
+  const {
+    activeTool,
+    toolSettings,
+    setActiveTool,
     updateToolSettings,
     getActiveToolSettings,
-    getToolByShortcut 
+    getToolByShortcut
   } = useToolStore()
   const { colors } = useUIStore()
+
+  // 工具实例引用
+  const toolInstances = useRef<{
+    crop?: CropTool
+    fill?: FillTool
+    erase?: EraseTool
+    clone?: CloneTool
+  }>({})
 
   // 取消当前工具
   const deactivateCurrentTool = useCallback(() => {
     if (!fabricCanvas) return
+
+    // 取消所有自定义工具
+    Object.values(toolInstances.current).forEach(tool => {
+      if (tool && typeof tool.deactivate === 'function') {
+        try {
+          tool.deactivate()
+        } catch (error) {
+          console.warn('Error deactivating tool:', error)
+        }
+      }
+    })
 
     // 重置 canvas 状态
     fabricCanvas.isDrawingMode = false
@@ -52,8 +75,6 @@ export const useTools = () => {
         const brush = new fabric.PencilBrush(canvas)
         brush.width = settings.brushSize || 5
         brush.color = settings.brushColor || colors.primary
-        brush.globalCompositeOperation = settings.brushOpacity ? 
-          `source-over` : 'source-over'
         
         canvas.freeDrawingBrush = brush
         break
@@ -78,31 +99,83 @@ export const useTools = () => {
         canvas.defaultCursor = 'crosshair'
         break
 
+      case 'crop':
+        canvas.isDrawingMode = false
+        canvas.selection = false
+        canvas.defaultCursor = 'crosshair'
+        
+        // 确保先取消其他工具
+        Object.entries(toolInstances.current).forEach(([key, tool]) => {
+          if (key !== 'crop' && tool && typeof tool.deactivate === 'function') {
+            tool.deactivate()
+          }
+        })
+        
+        // 初始化裁剪工具
+        if (!toolInstances.current.crop) {
+          toolInstances.current.crop = new CropTool(canvas)
+        }
+        toolInstances.current.crop.activate(settings)
+        break
+
       case 'fill':
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'
+        
+        // 确保先取消其他工具
+        Object.entries(toolInstances.current).forEach(([key, tool]) => {
+          if (key !== 'fill' && tool && typeof tool.deactivate === 'function') {
+            tool.deactivate()
+          }
+        })
+        
+        // 初始化填充工具
+        if (!toolInstances.current.fill) {
+          toolInstances.current.fill = new FillTool(canvas)
+        }
+        toolInstances.current.fill.activate(settings)
         break
 
       case 'erase':
-        canvas.isDrawingMode = true
-        canvas.selection = false
-        canvas.defaultCursor = 'crosshair'
-        
-        // 配置橡皮擦
-        const eraser = new fabric.EraserBrush(canvas)
-        eraser.width = settings.brushSize || 20
-        canvas.freeDrawingBrush = eraser
-        break
-
-      case 'pick_color':
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'
+        
+        // 确保先取消其他工具
+        Object.entries(toolInstances.current).forEach(([key, tool]) => {
+          if (key !== 'erase' && tool && typeof tool.deactivate === 'function') {
+            tool.deactivate()
+          }
+        })
+        
+        // 初始化橡皮擦工具
+        if (!toolInstances.current.erase) {
+          toolInstances.current.erase = new EraseTool(canvas)
+        }
+        toolInstances.current.erase.activate(settings)
         break
 
-      case 'crop':
       case 'clone':
+        canvas.isDrawingMode = false
+        canvas.selection = false
+        canvas.defaultCursor = 'crosshair'
+        
+        // 确保先取消其他工具
+        Object.entries(toolInstances.current).forEach(([key, tool]) => {
+          if (key !== 'clone' && tool && typeof tool.deactivate === 'function') {
+            tool.deactivate()
+          }
+        })
+        
+        // 初始化克隆工具
+        if (!toolInstances.current.clone) {
+          toolInstances.current.clone = new CloneTool(canvas)
+        }
+        toolInstances.current.clone.activate(settings)
+        break
+
+      case 'pick_color':
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'

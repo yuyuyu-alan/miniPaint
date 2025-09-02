@@ -10,3 +10,5 @@ export type { ModalProps } from './Modal'
 
 export { default as Dropdown } from './Dropdown'
 export type { DropdownProps, DropdownOption } from './Dropdown'
+
+export { default as Tooltip } from './Tooltip'
