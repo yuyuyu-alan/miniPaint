@@ -64,6 +64,13 @@ export const useTools = () => {
         canvas.isDrawingMode = false
         canvas.selection = true
         canvas.defaultCursor = 'default'
+        // 选择工具下允许选择与事件，恢复对象交互
+        canvas.hoverCursor = 'move'
+        canvas.moveCursor = 'move'
+        canvas.getObjects().forEach(obj => {
+          (obj as any).selectable = true
+          ;(obj as any).evented = true
+        })
         break
 
       case 'brush':
@@ -84,6 +91,13 @@ export const useTools = () => {
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'
+        // 形状工具下禁用对象交互，避免鼠标悬停变成拖动光标
+        canvas.hoverCursor = 'crosshair'
+        canvas.moveCursor = 'crosshair'
+        canvas.getObjects().forEach(obj => {
+          (obj as any).selectable = false
+          ;(obj as any).evented = false
+        })
         break
 
       case 'text':
@@ -274,7 +288,9 @@ export const useTools = () => {
     }
 
     fabricCanvas.add(shape)
-    fabricCanvas.setActiveObject(shape)
+    // 形状工具下不选中对象，保持绘制状态的光标，不进入拖动模式
+    ;(shape as any).selectable = false
+    ;(shape as any).evented = false
     fabricCanvas.renderAll()
   }, [fabricCanvas, getActiveToolSettings])
 
