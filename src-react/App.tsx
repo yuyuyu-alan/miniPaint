@@ -6,7 +6,7 @@ import PropertyPanel from '@/components/panels/PropertyPanel'
 import ColorPanel from '@/components/panels/ColorPanel'
 import EffectPanel from '@/components/panels/EffectPanel'
 import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
-import TestPanel from '@/components/TestPanel'
+import EffectTestPanel from '@/components/EffectTestPanel'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CanvasArea from '@/components/canvas/CanvasArea'
 import { useUIStore } from '@/stores/ui'
@@ -56,8 +56,8 @@ const App: React.FC = () => {
             <EffectPanel />
           )}
           
-          {/* 测试面板 (开发时使用) */}
-          <TestPanel />
+          {/* 效果测试面板 (临时) */}
+          <EffectTestPanel />
         </div>
       </div>
 

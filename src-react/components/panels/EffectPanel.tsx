@@ -18,12 +18,11 @@ const EffectControl: React.FC<EffectControlProps> = ({ title, children }) => {
 
 const EffectPanel: React.FC = () => {
   const {
-    brightness,
-    contrast, 
-    blur,
-    grayscale,
-    invert,
-    applyEffect
+    applyEffectToSelection,
+    applyEffectToCanvas,
+    previewEffect,
+    isProcessing,
+    supportedEffects
   } = useImageEffects()
 
   // 效果参数状态
@@ -32,6 +31,7 @@ const EffectPanel: React.FC = () => {
   const [blurRadius, setBlurRadius] = useState(1)
   const [saturationValue, setSaturationValue] = useState(0)
   const [hueValue, setHueValue] = useState(0)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   // 处理滑块变化
   const handleSliderChange = (setter: (value: number) => void) => (
@@ -68,13 +68,28 @@ const EffectPanel: React.FC = () => {
                 onChange={handleSliderChange(setBrightnessValue)}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => brightness(brightnessValue)}
-              >
-                应用亮度
-              </Button>
+              <div className="flex gap-1 mt-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={async () => {
+                    const url = await previewEffect('brightness', { value: brightnessValue })
+                    setPreviewUrl(url)
+                  }}
+                  disabled={isProcessing}
+                >
+                  预览
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => applyEffectToSelection('brightness', { value: brightnessValue })}
+                  disabled={isProcessing}
+                >
+                  应用
+                </Button>
+              </div>
             </div>
 
             {/* 对比度 */}
@@ -91,13 +106,28 @@ const EffectPanel: React.FC = () => {
                 onChange={handleSliderChange(setContrastValue)}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => contrast(contrastValue)}
-              >
-                应用对比度
-              </Button>
+              <div className="flex gap-1 mt-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={async () => {
+                    const url = await previewEffect('contrast', { value: contrastValue })
+                    setPreviewUrl(url)
+                  }}
+                  disabled={isProcessing}
+                >
+                  预览
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => applyEffectToSelection('contrast', { value: contrastValue })}
+                  disabled={isProcessing}
+                >
+                  应用
+                </Button>
+              </div>
             </div>
 
             {/* 饱和度 */}
@@ -114,13 +144,28 @@ const EffectPanel: React.FC = () => {
                 onChange={handleSliderChange(setSaturationValue)}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => applyEffect('saturate', { value: saturationValue })}
-              >
-                应用饱和度
-              </Button>
+              <div className="flex gap-1 mt-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={async () => {
+                    const url = await previewEffect('saturate', { value: saturationValue })
+                    setPreviewUrl(url)
+                  }}
+                  disabled={isProcessing}
+                >
+                  预览
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => applyEffectToSelection('saturate', { value: saturationValue })}
+                  disabled={isProcessing}
+                >
+                  应用
+                </Button>
+              </div>
             </div>
 
             {/* 色相 */}
@@ -137,13 +182,28 @@ const EffectPanel: React.FC = () => {
                 onChange={handleSliderChange(setHueValue)}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => applyEffect('hue-rotate', { angle: hueValue })}
-              >
-                应用色相
-              </Button>
+              <div className="flex gap-1 mt-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={async () => {
+                    const url = await previewEffect('hue-rotate', { angle: hueValue })
+                    setPreviewUrl(url)
+                  }}
+                  disabled={isProcessing}
+                >
+                  预览
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => applyEffectToSelection('hue-rotate', { angle: hueValue })}
+                  disabled={isProcessing}
+                >
+                  应用
+                </Button>
+              </div>
             </div>
           </div>
         </EffectControl>
@@ -164,13 +224,28 @@ const EffectPanel: React.FC = () => {
                 onChange={handleSliderChange(setBlurRadius)}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => blur(blurRadius)}
-              >
-                应用模糊
-              </Button>
+              <div className="flex gap-1 mt-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={async () => {
+                    const url = await previewEffect('blur', { radius: blurRadius })
+                    setPreviewUrl(url)
+                  }}
+                  disabled={isProcessing}
+                >
+                  预览
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => applyEffectToSelection('blur', { radius: blurRadius })}
+                  disabled={isProcessing}
+                >
+                  应用
+                </Button>
+              </div>
             </div>
           </div>
         </EffectControl>
@@ -181,30 +256,50 @@ const EffectPanel: React.FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => grayscale()}
+              onClick={() => applyEffectToSelection('grayscale')}
+              disabled={isProcessing}
             >
               灰度化
             </Button>
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => invert()}
+              onClick={() => applyEffectToSelection('invert')}
+              disabled={isProcessing}
             >
               反相
             </Button>
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => applyEffect('sepia')}
+              onClick={() => applyEffectToSelection('sepia')}
+              disabled={isProcessing}
             >
               怀旧
             </Button>
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => applyEffect('vintage')}
+              onClick={() => applyEffectToSelection('vintage')}
+              disabled={isProcessing}
             >
               复古
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => applyEffectToSelection('sharpen')}
+              disabled={isProcessing}
+            >
+              锐化
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => applyEffectToSelection('emboss')}
+              disabled={isProcessing}
+            >
+              浮雕
             </Button>
           </div>
         </EffectControl>
@@ -226,13 +321,36 @@ const EffectPanel: React.FC = () => {
           </Button>
         </div>
 
+        {/* 预览区域 */}
+        {previewUrl && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <h5 className="text-xs font-medium text-gray-700 mb-2">效果预览</h5>
+            <img
+              src={previewUrl}
+              alt="Effect Preview"
+              className="w-full h-24 object-contain bg-white rounded border"
+            />
+          </div>
+        )}
+
+        {/* 处理状态 */}
+        {isProcessing && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span className="text-sm text-blue-700">正在处理效果...</span>
+            </div>
+          </div>
+        )}
+
         {/* 使用说明 */}
         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
           <h5 className="text-xs font-medium text-gray-700 mb-2">使用说明</h5>
           <ul className="text-xs text-gray-600 space-y-1">
-            <li>• 选择一个对象</li>
+            <li>• 选择一个对象或图层</li>
             <li>• 调整效果参数</li>
-            <li>• 点击应用按钮</li>
+            <li>• 点击预览查看效果</li>
+            <li>• 点击应用确认效果</li>
             <li>• 支持撤销/重做</li>
           </ul>
         </div>

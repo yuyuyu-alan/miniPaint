@@ -195,6 +195,142 @@ class ImageEffects {
     return new ImageData(data, imageData.width, imageData.height)
   }
 
+  // 棕褐色效果
+  static sepia(imageData: ImageData): ImageData {
+    const data = new Uint8ClampedArray(imageData.data)
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i]
+      const g = data[i + 1]
+      const b = data[i + 2]
+      
+      data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189))
+      data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168))
+      data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131))
+    }
+    
+    return new ImageData(data, imageData.width, imageData.height)
+  }
+
+  // 锐化效果
+  static sharpen(imageData: ImageData): ImageData {
+    return ImageEffects.applyConvolution(imageData, [
+      0, -1, 0,
+      -1, 5, -1,
+      0, -1, 0
+    ])
+  }
+
+  // 浮雕效果
+  static emboss(imageData: ImageData): ImageData {
+    return ImageEffects.applyConvolution(imageData, [
+      -2, -1, 0,
+      -1, 1, 1,
+      0, 1, 2
+    ])
+  }
+
+  // 边缘检测
+  static edgeDetection(imageData: ImageData): ImageData {
+    return ImageEffects.applyConvolution(imageData, [
+      -1, -1, -1,
+      -1, 8, -1,
+      -1, -1, -1
+    ])
+  }
+
+  // 复古效果
+  static vintage(imageData: ImageData): ImageData {
+    const data = new Uint8ClampedArray(imageData.data)
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i]
+      const g = data[i + 1]
+      const b = data[i + 2]
+      
+      // 应用复古色调
+      data[i] = Math.min(255, r * 0.9 + g * 0.1)
+      data[i + 1] = Math.min(255, r * 0.1 + g * 0.8 + b * 0.1)
+      data[i + 2] = Math.min(255, g * 0.1 + b * 0.7)
+      
+      // 降低饱和度
+      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+      data[i] = data[i] * 0.7 + gray * 0.3
+      data[i + 1] = data[i + 1] * 0.7 + gray * 0.3
+      data[i + 2] = data[i + 2] * 0.7 + gray * 0.3
+    }
+    
+    return new ImageData(data, imageData.width, imageData.height)
+  }
+
+  // 噪点效果
+  static noise(imageData: ImageData, amount: number): ImageData {
+    const data = new Uint8ClampedArray(imageData.data)
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = (Math.random() - 0.5) * amount
+      data[i] = Math.max(0, Math.min(255, data[i] + noise))
+      data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise))
+      data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise))
+    }
+    
+    return new ImageData(data, imageData.width, imageData.height)
+  }
+
+  // 暗角效果
+  static vignette(imageData: ImageData, strength: number): ImageData {
+    const { data, width, height } = imageData
+    const newData = new Uint8ClampedArray(data)
+    const centerX = width / 2
+    const centerY = height / 2
+    const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY)
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2)
+        const vignette = 1 - (distance / maxDistance) * strength
+        const factor = Math.max(0, Math.min(1, vignette))
+        
+        const idx = (y * width + x) * 4
+        newData[idx] *= factor
+        newData[idx + 1] *= factor
+        newData[idx + 2] *= factor
+      }
+    }
+    
+    return new ImageData(newData, width, height)
+  }
+
+  // 卷积操作辅助方法
+  static applyConvolution(imageData: ImageData, kernel: number[]): ImageData {
+    const { data, width, height } = imageData
+    const newData = new Uint8ClampedArray(data)
+    
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let r = 0, g = 0, b = 0
+        
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const idx = ((y + ky) * width + (x + kx)) * 4
+            const weight = kernel[(ky + 1) * 3 + (kx + 1)]
+            
+            r += data[idx] * weight
+            g += data[idx + 1] * weight
+            b += data[idx + 2] * weight
+          }
+        }
+        
+        const idx = (y * width + x) * 4
+        newData[idx] = Math.max(0, Math.min(255, r))
+        newData[idx + 1] = Math.max(0, Math.min(255, g))
+        newData[idx + 2] = Math.max(0, Math.min(255, b))
+      }
+    }
+    
+    return new ImageData(newData, width, height)
+  }
+
   // 创建高斯模糊内核
   static createGaussianKernel(radius: number): number[] {
     const size = radius * 2 + 1
@@ -254,6 +390,34 @@ self.onmessage = function(e: MessageEvent<ProcessMessage>) {
       
       case 'grayscale':
         processedData = ImageEffects.grayscale(imageData)
+        break
+      
+      case 'sepia':
+        processedData = ImageEffects.sepia(imageData)
+        break
+      
+      case 'sharpen':
+        processedData = ImageEffects.sharpen(imageData)
+        break
+      
+      case 'emboss':
+        processedData = ImageEffects.emboss(imageData)
+        break
+      
+      case 'edge':
+        processedData = ImageEffects.edgeDetection(imageData)
+        break
+      
+      case 'vintage':
+        processedData = ImageEffects.vintage(imageData)
+        break
+      
+      case 'noise':
+        processedData = ImageEffects.noise(imageData, params.amount || 10)
+        break
+      
+      case 'vignette':
+        processedData = ImageEffects.vignette(imageData, params.strength || 0.5)
         break
       
       default:
