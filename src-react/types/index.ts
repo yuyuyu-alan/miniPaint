@@ -1,4 +1,4 @@
-import { fabric } from 'fabric'
+import * as fabric from 'fabric'
 
 // 工具类型枚举
 export type ToolType = 

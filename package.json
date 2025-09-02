@@ -49,6 +49,7 @@
     "@types/fabric": "^5.3.10",
     "@types/react": "18",
     "@types/react-dom": "18",
+    "@types/uuid": "^10.0.0",
     "alertifyjs": "^1.13.1",
     "blueimp-canvas-to-blob": "^3.28.0",
     "exif-js": "^2.3.0",

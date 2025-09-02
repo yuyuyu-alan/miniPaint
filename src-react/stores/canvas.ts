@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import { fabric } from 'fabric'
+import * as fabric from 'fabric'
 import type { CanvasState } from '@/types'
 
 interface CanvasStore extends CanvasState {
