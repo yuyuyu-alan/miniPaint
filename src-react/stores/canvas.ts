@@ -55,7 +55,8 @@ export const useCanvasStore = create<CanvasStore>()(
           fabricCanvas.zoomToPoint(new fabric.Point(center.x, center.y), clampedZoom)
         } else {
           const canvasCenter = fabricCanvas.getCenter()
-          fabricCanvas.zoomToPoint(canvasCenter, clampedZoom)
+          const centerPoint = new fabric.Point(canvasCenter.left, canvasCenter.top)
+          fabricCanvas.zoomToPoint(centerPoint, clampedZoom)
         }
         fabricCanvas.renderAll()
       }
@@ -76,9 +77,8 @@ export const useCanvasStore = create<CanvasStore>()(
       set({ backgroundColor: color })
       
       if (fabricCanvas) {
-        fabricCanvas.setBackgroundColor(color, () => {
-          fabricCanvas.renderAll()
-        })
+        fabricCanvas.backgroundColor = color
+        fabricCanvas.renderAll()
       }
     },
 

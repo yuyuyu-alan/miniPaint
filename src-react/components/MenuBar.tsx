@@ -4,6 +4,7 @@ import { useLayerStore } from '@/stores/layers'
 import { useHistoryStore } from '@/stores/history'
 import { useUIStore } from '@/stores/ui'
 import { Button, Modal, Input } from '@/components/ui'
+import * as fabric from 'fabric'
 
 interface MenuBarProps {
   className?: string
@@ -77,8 +78,39 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
           const reader = new FileReader()
           reader.onload = (e) => {
             const imageUrl = e.target?.result as string
-            // TODO: 添加图片到 canvas
-            console.log('Load image:', imageUrl)
+            if (fabricCanvas && imageUrl) {
+              // 使用Fabric.js加载图片
+              fabric.Image.fromURL(imageUrl).then((img: fabric.Image) => {
+                // 计算合适的缩放比例
+                const canvasWidth = fabricCanvas.width || 800
+                const canvasHeight = fabricCanvas.height || 600
+                
+                const maxWidth = canvasWidth * 0.8
+                const maxHeight = canvasHeight * 0.8
+                
+                const scaleX = img.width! > maxWidth ? maxWidth / img.width! : 1
+                const scaleY = img.height! > maxHeight ? maxHeight / img.height! : 1
+                const scale = Math.min(scaleX, scaleY)
+                
+                img.set({
+                  left: canvasWidth / 2,
+                  top: canvasHeight / 2,
+                  originX: 'center',
+                  originY: 'center',
+                  scaleX: scale,
+                  scaleY: scale
+                })
+                
+                fabricCanvas.add(img)
+                fabricCanvas.setActiveObject(img)
+                fabricCanvas.renderAll()
+                
+                console.log('Image loaded successfully')
+              }).catch((error: any) => {
+                console.error('Failed to load image:', error)
+                alert('图片加载失败')
+              })
+            }
           }
           reader.readAsDataURL(file)
         } else if (file.name.endsWith('.json')) {

@@ -29,7 +29,8 @@ export const useCanvasViewport = () => {
       fabricCanvas.zoomToPoint(point, clampedZoom)
     } else {
       const canvasCenter = fabricCanvas.getCenter()
-      fabricCanvas.zoomToPoint(canvasCenter, clampedZoom)
+      const centerPoint = new fabric.Point(canvasCenter.left, canvasCenter.top)
+      fabricCanvas.zoomToPoint(centerPoint, clampedZoom)
     }
     
     setZoom(clampedZoom)
@@ -90,13 +91,10 @@ export const useCanvasViewport = () => {
     
     // 居中画布
     if (fabricCanvas) {
-      fabricCanvas.absolutePan(new fabric.Point(
-        (width - width) / 2,
-        (height - height) / 2
-      ))
+      fabricCanvas.absolutePan(new fabric.Point(0, 0))
       fabricCanvas.renderAll()
     }
-  }, [zoomTo, fabricCanvas, width, height])
+  }, [zoomTo, fabricCanvas])
 
   // 放大
   const zoomIn = useCallback(() => {
