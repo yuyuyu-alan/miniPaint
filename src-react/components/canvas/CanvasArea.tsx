@@ -266,7 +266,7 @@ const CanvasArea: React.FC = () => {
       <div className="absolute bottom-4 left-4 flex gap-2">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
           <span className="text-sm text-gray-600">
-            Phase 4 - Canvas Core 完成
+            Phase 5 - 效果系统完成
           </span>
         </div>
         
