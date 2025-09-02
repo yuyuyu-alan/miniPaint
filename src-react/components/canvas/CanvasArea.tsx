@@ -315,20 +315,31 @@ const CanvasArea: React.FC = () => {
       const pointer = fabricCanvas.getPointer(e.e)
       const endPoint = new fabric.Point(pointer.x, pointer.y)
 
+      // 判断是否有足够拖拽距离，避免单击就生成形状
+      const dx = endPoint.x - startPoint.x
+      const dy = endPoint.y - startPoint.y
+      const movedDistance = Math.hypot(dx, dy)
+      const MIN_DRAG_DISTANCE = 5 // 最小拖拽距离阈值（像素）
+
       // 移除临时对象
       fabricCanvas.remove(tempObject)
 
-      // 创建最终对象
-      switch (activeTool) {
-        case 'rectangle':
-        case 'circle':
-          createShape(activeTool, startPoint, endPoint)
-          break
+      if (movedDistance < MIN_DRAG_DISTANCE) {
+        // 单击，不生成最终对象
+        debouncedRender()
+      } else {
+        // 创建最终对象
+        switch (activeTool) {
+          case 'rectangle':
+          case 'circle':
+            createShape(activeTool, startPoint, endPoint)
+            break
 
-        case 'line':
-        case 'arrow':
-          createLine(startPoint, endPoint)
-          break
+          case 'line':
+          case 'arrow':
+            createLine(startPoint, endPoint)
+            break
+        }
       }
     }
 
