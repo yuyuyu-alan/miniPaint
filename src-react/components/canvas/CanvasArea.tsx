@@ -17,6 +17,13 @@ const CanvasArea: React.FC = () => {
   const [tempObject, setTempObject] = useState<fabric.Object | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [dropMessage, setDropMessage] = useState<string | null>(null)
+
+  // 存储当前绑定到 Fabric 的鼠标事件处理器引用，便于在工具切换时精确卸载旧回调
+  const handlerRefs = useRef<{
+    down?: (e: fabric.TEvent<fabric.TPointerEvent>) => void
+    move?: (e: fabric.TEvent<fabric.TPointerEvent>) => void
+    up?: (e: fabric.TEvent<fabric.TPointerEvent>) => void
+  }>({})
   
   const { 
     fabricCanvas, 
@@ -29,7 +36,7 @@ const CanvasArea: React.FC = () => {
   
   const { activeLayerId } = useLayerStore()
   const { saveState } = useHistoryStore()
-  const { activeTool, createShape, createText, createLine } = useTools()
+  const { activeTool, createShape, createText, createLine, getActiveToolSettings } = useTools()
   const { zoomIn, zoomOut, zoomToFit, zoomToActualSize, resetView } = useCanvasViewport()
 
   // 简化的性能优化 - 安全实现
@@ -117,10 +124,7 @@ const CanvasArea: React.FC = () => {
           setTimeout(() => saveState(`画笔绘制`), 100)
         })
 
-        // 监听鼠标事件
-        canvas.on('mouse:down', handleMouseDown)
-        canvas.on('mouse:move', handleMouseMove)
-        canvas.on('mouse:up', handleMouseUp)
+        // 监听鼠标事件由专用 effect 动态绑定，确保读取到最新 activeTool 和回调
 
         // 右键菜单事件 - 安全实现
         canvas.on('mouse:down', (e) => {
@@ -203,15 +207,38 @@ const CanvasArea: React.FC = () => {
         break
 
       case 'rectangle':
-      case 'circle':
-        const tempShape = activeTool === 'rectangle' 
-          ? new fabric.Rect({ left: point.x, top: point.y, width: 0, height: 0, fill: 'transparent', stroke: '#000', strokeWidth: 2 })
-          : new fabric.Circle({ left: point.x, top: point.y, radius: 0, fill: 'transparent', stroke: '#000', strokeWidth: 2 })
+      case 'circle': {
+        const settings = getActiveToolSettings()
+        const strokeWidth = settings.strokeWidth ?? 2
+        const strokeColor = (strokeWidth > 0) ? (settings.strokeColor || '#000') : undefined
+        const fillColor = (settings.fillColor && settings.fillColor !== 'transparent') ? settings.fillColor : undefined
+
+        const tempShape = activeTool === 'rectangle'
+          ? new fabric.Rect({
+              left: point.x,
+              top: point.y,
+              width: 0,
+              height: 0,
+              fill: fillColor,
+              stroke: strokeColor,
+              strokeWidth
+            })
+          : new fabric.Circle({
+              left: point.x,
+              top: point.y,
+              radius: 0,
+              fill: fillColor,
+              stroke: strokeColor,
+              strokeWidth,
+              originX: 'center',
+              originY: 'center'
+            })
         
         fabricCanvas.add(tempShape)
         setTempObject(tempShape)
         debouncedRender()
         break
+      }
 
       case 'line':
       case 'arrow':
@@ -254,12 +281,16 @@ const CanvasArea: React.FC = () => {
         break
 
       case 'circle':
-        if (tempObject) {
-          const radius = Math.abs(currentPoint.x - startPoint.x) / 2
-          const left = startPoint.x
-          const top = startPoint.y
+        if (tempObject && tempObject instanceof fabric.Circle) {
+          const dx = currentPoint.x - startPoint.x
+          const dy = currentPoint.y - startPoint.y
+          const radius = Math.min(Math.abs(dx), Math.abs(dy)) / 2
+
+          // 围绕起点向拖拽方向扩展，保持圆心在可视范围内
+          const centerX = startPoint.x + (dx >= 0 ? radius : -radius)
+          const centerY = startPoint.y + (dy >= 0 ? radius : -radius)
           
-          tempObject.set({ left, top, radius })
+          tempObject.set({ left: centerX, top: centerY, radius })
           debouncedRender()
         }
         break
@@ -304,6 +335,38 @@ const CanvasArea: React.FC = () => {
     setStartPoint(null)
     setTempObject(null)
   }, [fabricCanvas, isDrawing, tempObject, startPoint, activeTool, createShape, createLine])
+
+  // 根据当前工具状态动态（重新）绑定鼠标事件，修复闭包导致的矩形/圆形无法绘制问题
+  useEffect(() => {
+    if (!fabricCanvas) return
+    try {
+      // 卸载旧的我们绑定过的处理器（不影响其它 mouse:down 监听，比如右键菜单）
+      if (handlerRefs.current.down) {
+        fabricCanvas.off('mouse:down', handlerRefs.current.down as any)
+      }
+      if (handlerRefs.current.move) {
+        fabricCanvas.off('mouse:move', handlerRefs.current.move as any)
+      }
+      if (handlerRefs.current.up) {
+        fabricCanvas.off('mouse:up', handlerRefs.current.up as any)
+      }
+
+      // 绑定当前的处理器
+      fabricCanvas.on('mouse:down', handleMouseDown as any)
+      fabricCanvas.on('mouse:move', handleMouseMove as any)
+      fabricCanvas.on('mouse:up', handleMouseUp as any)
+
+      // 记录引用，供下次解绑使用
+      handlerRefs.current = {
+        down: handleMouseDown as any,
+        move: handleMouseMove as any,
+        up: handleMouseUp as any,
+      }
+    } catch (err) {
+      console.warn('Rebind canvas mouse handlers failed:', err)
+    }
+    // 不在这里返回清理函数，初始化阶段已有全局清理；按需在依赖变化时精确卸载
+  }, [fabricCanvas, handleMouseDown, handleMouseMove, handleMouseUp])
 
   // 右键菜单处理 - 安全实现
   const handleRightClick = useCallback((e: MouseEvent) => {
