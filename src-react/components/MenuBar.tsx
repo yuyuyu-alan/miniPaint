@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useCanvasStore } from '@/stores/canvas'
 import { useLayerStore } from '@/stores/layers'
+import { useHistoryStore } from '@/stores/history'
 import { useUIStore } from '@/stores/ui'
 import { Button, Modal, Input } from '@/components/ui'
 
@@ -24,6 +25,14 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     clearAllLayers 
   } = useLayerStore()
   
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clearHistory
+  } = useHistoryStore()
+  
   const { 
     theme,
     setTheme
@@ -45,6 +54,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     const h = parseInt(newCanvasHeight) || 600
     setDimensions(w, h)
     clearAllLayers()
+    clearHistory()
     addLayer({
       name: '背景图层',
       visible: true,
@@ -127,13 +137,11 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
 
   // 编辑操作
   const handleUndo = () => {
-    // TODO: 实现撤销功能
-    console.log('Undo')
+    undo()
   }
 
   const handleRedo = () => {
-    // TODO: 实现重做功能
-    console.log('Redo')
+    redo()
   }
 
   const handleCopy = () => {
@@ -185,8 +193,18 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     {
       label: '编辑',
       items: [
-        { label: '撤销', shortcut: 'Ctrl+Z', action: handleUndo },
-        { label: '重做', shortcut: 'Ctrl+Y', action: handleRedo },
+        { 
+          label: '撤销', 
+          shortcut: 'Ctrl+Z', 
+          action: handleUndo,
+          disabled: !canUndo()
+        },
+        { 
+          label: '重做', 
+          shortcut: 'Ctrl+Y', 
+          action: handleRedo,
+          disabled: !canRedo()
+        },
         { type: 'divider' as const },
         { label: '复制', shortcut: 'Ctrl+C', action: handleCopy },
         { label: '粘贴', shortcut: 'Ctrl+V', action: handlePaste },
@@ -198,6 +216,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
         { label: '放大', shortcut: 'Ctrl++', action: handleZoomIn },
         { label: '缩小', shortcut: 'Ctrl+-', action: handleZoomOut },
         { label: '适合窗口', shortcut: 'Ctrl+0', action: handleZoomFit },
+        { type: 'divider' as const },
+        { label: '工具面板', action: () => useUIStore.getState().togglePanel('tools') },
+        { label: '图层面板', action: () => useUIStore.getState().togglePanel('layers') },
+        { label: '属性面板', action: () => useUIStore.getState().togglePanel('properties') },
+        { label: '颜色面板', action: () => useUIStore.getState().togglePanel('colors') },
+        { label: '效果面板', action: () => useUIStore.getState().togglePanel('effects') },
         { type: 'divider' as const },
         { label: theme === 'dark' ? '浅色模式' : '深色模式', action: toggleTheme },
       ]
@@ -228,6 +252,34 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
 
           {/* 右侧操作 */}
           <div className="ml-auto flex items-center space-x-2">
+            {/* 撤销重做按钮 */}
+            <button
+              onClick={handleUndo}
+              disabled={!canUndo()}
+              className={`px-2 py-1 text-sm rounded transition-colors ${
+                canUndo() 
+                  ? 'text-gray-700 hover:bg-gray-100' 
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+              title="撤销 (Ctrl+Z)"
+            >
+              ↶
+            </button>
+            <button
+              onClick={handleRedo}
+              disabled={!canRedo()}
+              className={`px-2 py-1 text-sm rounded transition-colors ${
+                canRedo() 
+                  ? 'text-gray-700 hover:bg-gray-100' 
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+              title="重做 (Ctrl+Y)"
+            >
+              ↷
+            </button>
+            
+            <div className="w-px h-4 bg-gray-300 mx-2" />
+            
             {/* 缩放显示 */}
             <div className="flex items-center text-sm text-gray-600">
               <span>{Math.round(zoom * 100)}%</span>
@@ -297,6 +349,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
             <p>基于 React 18 + TypeScript 的现代化绘图应用</p>
             <p>技术栈：Vite + UnoCSS + Zustand + Fabric.js</p>
             <p>版本：2.0.0</p>
+            <p>完成进度：Phase 5 - Effects System Migration</p>
           </div>
           
           <div className="flex justify-end">

@@ -46,6 +46,7 @@ export const useUIStore = create<UIStore>()(
         tools: true,
         properties: true,
         colors: true,
+        effects: true,
       },
       modalOpen: null,
       

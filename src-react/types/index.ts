@@ -77,6 +77,7 @@ export interface UIState {
     tools: boolean
     properties: boolean
     colors: boolean
+    effects: boolean
   }
   modalOpen: string | null
 }

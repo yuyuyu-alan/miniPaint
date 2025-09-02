@@ -6,14 +6,21 @@ interface ToolStore {
   activeTool: ToolType
   toolSettings: Record<ToolType, ToolSettings>
   
+  // 工具历史记录
+  recentTools: ToolType[]
+  
   // 工具操作
   setActiveTool: (tool: ToolType) => void
   updateToolSettings: (tool: ToolType, settings: Partial<ToolSettings>) => void
   resetToolSettings: (tool: ToolType) => void
+  resetAllToolSettings: () => void
   
   // 获取工具配置
   getToolSettings: (tool: ToolType) => ToolSettings
   getActiveToolSettings: () => ToolSettings
+  
+  // 工具快捷键
+  getToolByShortcut: (key: string) => ToolType | null
 }
 
 // 默认工具设置
@@ -76,15 +83,39 @@ const defaultToolSettings: Record<ToolType, ToolSettings> = {
   },
 }
 
+// 工具快捷键映射
+const toolShortcuts: Record<string, ToolType> = {
+  'KeyV': 'select',
+  'KeyB': 'brush', 
+  'KeyR': 'rectangle',
+  'KeyC': 'circle',
+  'KeyT': 'text',
+  'KeyL': 'line',
+  'KeyA': 'arrow',
+  'KeyG': 'fill',
+  'KeyE': 'erase',
+  'KeyS': 'clone',
+  'KeyI': 'pick_color',
+}
+
 export const useToolStore = create<ToolStore>()(
   subscribeWithSelector((set, get) => ({
     // 初始状态
     activeTool: 'select' as ToolType,
     toolSettings: { ...defaultToolSettings },
+    recentTools: ['select', 'brush', 'rectangle'],
 
     // 工具操作
     setActiveTool: (tool) => {
-      set({ activeTool: tool })
+      const { recentTools } = get()
+      
+      // 更新最近使用的工具
+      const newRecentTools = [tool, ...recentTools.filter(t => t !== tool)].slice(0, 5)
+      
+      set({ 
+        activeTool: tool,
+        recentTools: newRecentTools 
+      })
     },
 
     updateToolSettings: (tool, settings) => {
@@ -107,6 +138,12 @@ export const useToolStore = create<ToolStore>()(
         },
       }))
     },
+    
+    resetAllToolSettings: () => {
+      set({
+        toolSettings: { ...defaultToolSettings },
+      })
+    },
 
     // 获取工具配置
     getToolSettings: (tool) => {
@@ -117,6 +154,11 @@ export const useToolStore = create<ToolStore>()(
     getActiveToolSettings: () => {
       const { activeTool, toolSettings } = get()
       return toolSettings[activeTool] || {}
+    },
+    
+    // 根据快捷键获取工具
+    getToolByShortcut: (key) => {
+      return toolShortcuts[key] || null
     },
   }))
 )

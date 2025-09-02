@@ -13,6 +13,7 @@ interface LayerStore {
   removeLayer: (id: string) => void
   updateLayer: (id: string, updates: Partial<Layer>) => void
   duplicateLayer: (id: string) => string | null
+  setLayers: (layers: Layer[]) => void
   
   // 图层顺序操作
   moveLayer: (id: string, newIndex: number) => void
@@ -133,6 +134,10 @@ export const useLayerStore = create<LayerStore>()(
       })
 
       return newId
+    },
+
+    setLayers: (layers) => {
+      set({ layers })
     },
 
     // 图层顺序操作
