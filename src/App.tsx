@@ -29,6 +29,11 @@ const App: React.FC = () => {
       {/* 顶部菜单栏 */}
       <MenuBar />
 
+      {/* 工具设置面板 - 横向布局 */}
+      <div className="flex-shrink-0 border-b border-gray-200">
+        <ToolSettingsPanel />
+      </div>
+
       {/* 主内容区域 */}
       <div className="flex-1 flex overflow-hidden">
         {/* 左侧工具面板 */}
@@ -46,11 +51,6 @@ const App: React.FC = () => {
 
         {/* 右侧面板区域 - Photoshop风格标签式面板 */}
         <div className="flex-shrink-0 flex">
-          {/* 工具设置面板 */}
-          <div style={{ width: getPanelWidth() }}>
-            <ToolSettingsPanel />
-          </div>
-
           {/* 主面板区域 - 标签式 */}
           <div className="flex-shrink-0 flex flex-col bg-gray-100 border-l border-gray-300" style={{ width: getPanelWidth() }}>
             {/* 面板标签栏 */}

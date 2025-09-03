@@ -65,7 +65,7 @@ const ToolPanel: React.FC = () => {
       
       {/* 工具设置按钮 */}
       <div className="p-2">
-        <Tooltip content="工具设置" position="right">
+        <Tooltip content=" 工具设置" position="right">
           <button
             className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600"
           >
