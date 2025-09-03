@@ -9,6 +9,7 @@ import { FillTool } from '@/tools/FillTool'
 import { EraseTool } from '@/tools/EraseTool'
 import { CloneTool } from '@/tools/CloneTool'
 import { PenTool } from '@/tools/PenTool'
+import { LineTool } from '@/tools/LineTool'
 
 export const useTools = () => {
   const { fabricCanvas } = useCanvasStore()
@@ -29,6 +30,7 @@ export const useTools = () => {
     erase?: EraseTool
     clone?: CloneTool
     pen?: PenTool
+    line?: LineTool
   }>({})
 
   // 取消当前工具
@@ -110,6 +112,33 @@ export const useTools = () => {
         break
 
       case 'line':
+        canvas.isDrawingMode = false
+        canvas.selection = false
+        canvas.defaultCursor = 'crosshair'
+        canvas.hoverCursor = 'crosshair'
+        canvas.moveCursor = 'crosshair'
+        canvas.skipTargetFind = true
+
+        // 禁用对象交互，避免鼠标进入拖动模式
+        canvas.getObjects().forEach(obj => {
+          (obj as any).selectable = false
+          ;(obj as any).evented = false
+        })
+        
+        // 确保先取消其他工具
+        Object.entries(toolInstances.current).forEach(([key, tool]) => {
+          if (key !== 'line' && tool && typeof tool.deactivate === 'function') {
+            tool.deactivate()
+          }
+        })
+        
+        // 初始化直线工具
+        if (!toolInstances.current.line) {
+          toolInstances.current.line = new LineTool(canvas)
+        }
+        toolInstances.current.line.activate(settings)
+        break
+
       case 'arrow':
         canvas.isDrawingMode = false
         canvas.selection = false
@@ -285,6 +314,11 @@ export const useTools = () => {
     // 如果当前是钢笔工具，需要更新钢笔工具设置
     if (activeTool === 'pen' && toolInstances.current.pen) {
       toolInstances.current.pen.updateSettings(settings)
+    }
+
+    // 如果当前是直线工具，需要更新直线工具设置
+    if (activeTool === 'line' && toolInstances.current.line) {
+      toolInstances.current.line.updateSettings(settings)
     }
   }, [fabricCanvas, activeTool, colors.primary, getActiveToolSettings, toolSettings])
 
