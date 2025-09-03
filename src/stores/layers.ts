@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
-import * as fabric from 'fabric'
+// import * as fabric from 'fabric'
 import type { Layer } from '@/types'
 
 interface LayerStore {
@@ -12,7 +12,7 @@ interface LayerStore {
   addLayer: (layer: Omit<Layer, 'id'>) => string
   removeLayer: (id: string) => void
   updateLayer: (id: string, updates: Partial<Layer>) => void
-  duplicateLayer: (id: string) => string | null
+  duplicateLayer: (id: string) => Promise<string | null>
   setLayers: (layers: Layer[]) => void
   
   // 图层顺序操作
@@ -113,27 +113,37 @@ export const useLayerStore = create<LayerStore>()(
     duplicateLayer: (id) => {
       const { layers } = get()
       const originalLayer = layers.find(layer => layer.id === id)
-      if (!originalLayer) return null
+      if (!originalLayer) return Promise.resolve(null)
 
       const newId = uuidv4()
-      const duplicatedLayer: Layer = {
-        ...originalLayer,
-        id: newId,
-        name: `${originalLayer.name} 副本`,
-        fabricObject: originalLayer.fabricObject ? 
-          fabric.util.object.clone(originalLayer.fabricObject) : undefined,
-      }
+      
+      // 处理 fabricObject 的异步克隆
+      const clonePromise = originalLayer.fabricObject
+        ? originalLayer.fabricObject.clone().catch((error) => {
+            console.warn('Failed to clone fabric object:', error)
+            return undefined
+          })
+        : Promise.resolve(undefined)
 
-      const originalIndex = layers.findIndex(layer => layer.id === id)
-      const newLayers = [...layers]
-      newLayers.splice(originalIndex, 0, duplicatedLayer)
+      return clonePromise.then((clonedFabricObject) => {
+        const duplicatedLayer: Layer = {
+          ...originalLayer,
+          id: newId,
+          name: `${originalLayer.name} 副本`,
+          fabricObject: clonedFabricObject,
+        }
 
-      set({
-        layers: newLayers,
-        activeLayerId: newId,
+        const originalIndex = layers.findIndex(layer => layer.id === id)
+        const newLayers = [...layers]
+        newLayers.splice(originalIndex, 0, duplicatedLayer)
+
+        set({
+          layers: newLayers,
+          activeLayerId: newId,
+        })
+
+        return newId
       })
-
-      return newId
     },
 
     setLayers: (layers) => {
