@@ -198,7 +198,6 @@ const PropertyPanel: React.FC = () => {
         )
 
       case 'line':
-      case 'arrow':
         return (
           <div className="space-y-4">
             <div>
@@ -216,22 +215,6 @@ const PropertyPanel: React.FC = () => {
               </div>
             </div>
             
-            {activeTool === 'arrow' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">箭头大小</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="5"
-                    max="30"
-                    value={currentSettings.arrowSize || 10}
-                    onChange={(e) => updateToolSettings(activeTool, { arrowSize: parseInt(e.target.value) })}
-                    className="flex-1"
-                  />
-                  <span className="text-sm text-gray-600 w-8">{currentSettings.arrowSize || 10}</span>
-                </div>
-              </div>
-            )}
           </div>
         )
 
@@ -413,7 +396,6 @@ const PropertyPanel: React.FC = () => {
                activeTool === 'circle' ? '圆形工具' :
                activeTool === 'text' ? '文本工具' :
                activeTool === 'line' ? '直线工具' :
-               activeTool === 'arrow' ? '箭头工具' :
                activeTool === 'erase' ? '橡皮工具' :
                activeTool === 'pen' ? '钢笔工具' :
                activeTool}属性

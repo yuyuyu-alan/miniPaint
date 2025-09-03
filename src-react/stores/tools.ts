@@ -56,11 +56,6 @@ const defaultToolSettings: Record<ToolType, ToolSettings> = {
     strokeColor: '#000000',
     strokeWidth: 2,
   },
-  arrow: {
-    strokeColor: '#000000',
-    strokeWidth: 2,
-    arrowSize: 10,
-  },
   crop: {
     aspectRatio: 'free',
     showGrid: true,
@@ -99,7 +94,6 @@ const toolShortcuts: Record<string, ToolType> = {
   'KeyC': 'circle',
   'KeyT': 'text',
   'KeyL': 'line',
-  'KeyA': 'arrow',
   'KeyG': 'fill',
   'KeyE': 'erase',
   'KeyS': 'clone',

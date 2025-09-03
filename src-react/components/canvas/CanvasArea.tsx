@@ -242,14 +242,7 @@ const CanvasArea: React.FC = () => {
       }
 
       case 'line':
-      case 'arrow':
-        const tempLine = new fabric.Line([point.x, point.y, point.x, point.y], {
-          stroke: '#000',
-          strokeWidth: 2
-        })
-        fabricCanvas.add(tempLine)
-        setTempObject(tempLine)
-        debouncedRender()
+        // 直线工具现在由LineTool类处理，不需要在这里处理
         break
 
       case 'text':
@@ -298,11 +291,7 @@ const CanvasArea: React.FC = () => {
         break
 
       case 'line':
-      case 'arrow':
-        if (tempObject && tempObject instanceof fabric.Line) {
-          tempObject.set({ x2: currentPoint.x, y2: currentPoint.y })
-          debouncedRender()
-        }
+        // 直线工具现在由LineTool类处理，不需要在这里处理
         break
     }
   }, [fabricCanvas, activeTool, isDrawing, startPoint, tempObject])
@@ -339,8 +328,7 @@ const CanvasArea: React.FC = () => {
             break
 
           case 'line':
-          case 'arrow':
-            createLine(startPoint, endPoint)
+            // 直线工具现在由LineTool类处理，不需要在这里处理
             break
         }
       }

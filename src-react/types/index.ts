@@ -8,7 +8,6 @@ export type ToolType =
   | 'circle'
   | 'text'
   | 'line'
-  | 'arrow'
   | 'crop'
   | 'fill'
   | 'erase'

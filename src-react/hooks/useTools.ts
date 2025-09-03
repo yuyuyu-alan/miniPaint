@@ -139,11 +139,6 @@ export const useTools = () => {
         toolInstances.current.line.activate(settings)
         break
 
-      case 'arrow':
-        canvas.isDrawingMode = false
-        canvas.selection = false
-        canvas.defaultCursor = 'crosshair'
-        break
 
       case 'crop':
         canvas.isDrawingMode = false
@@ -426,7 +421,6 @@ export const getToolIcon = (tool: ToolType): string => {
     circle: 'circle',
     text: 'type',
     line: 'minus',
-    arrow: 'arrow-up-right',
     crop: 'crop',
     fill: 'paint-bucket',
     erase: 'eraser',
@@ -446,7 +440,6 @@ export const getToolName = (tool: ToolType): string => {
     circle: '圆形',
     text: '文本',
     line: '直线',
-    arrow: '箭头',
     crop: '裁剪',
     fill: '填充',
     erase: '橡皮擦',

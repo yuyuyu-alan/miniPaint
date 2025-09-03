@@ -42,7 +42,6 @@ const KeyboardShortcuts: React.FC = () => {
         { key: 'C', description: '圆形工具', action: 'circle' },
         { key: 'T', description: '文本工具', action: 'text' },
         { key: 'L', description: '直线工具', action: 'line' },
-        { key: 'A', description: '箭头工具', action: 'arrow' },
         { key: 'K', description: '裁剪工具', action: 'crop' },
         { key: 'G', description: '填充工具', action: 'fill' },
         { key: 'E', description: '橡皮擦工具', action: 'erase' },

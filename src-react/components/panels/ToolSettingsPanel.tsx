@@ -512,7 +512,6 @@ const ToolSettingsPanel: React.FC = () => {
       case 'rectangle':
       case 'circle':
       case 'line':
-      case 'arrow':
         return renderShapeSettings()
       case 'text':
         return renderTextSettings()
@@ -541,7 +540,6 @@ const ToolSettingsPanel: React.FC = () => {
       circle: '圆形工具',
       text: '文本工具',
       line: '直线工具',
-      arrow: '箭头工具',
       crop: '裁剪工具',
       fill: '填充工具',
       erase: '橡皮擦工具',
