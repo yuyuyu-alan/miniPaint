@@ -1,5 +1,8 @@
 import * as fabric from 'fabric'
 import type { ToolSettings, BezierPoint, BezierPath, PenToolState } from '@/types'
+import { PEN_TOOL_CONFIG, PEN_TOOL_STYLES, PEN_TOOL_MESSAGES, PEN_TOOL_DEFAULTS } from './pen-tool/config'
+import { penToolErrorHandler, PenToolError, PenToolErrorType } from './pen-tool/error-handler'
+import { renderOptimizer, performanceMonitor, debounce } from './pen-tool/performance'
 
 export class PenTool {
   private canvas: fabric.Canvas | null = null
@@ -13,14 +16,7 @@ export class PenTool {
     showPreview: false,
   }
   
-  private settings: ToolSettings = {
-    strokeColor: '#000000',
-    strokeWidth: 2,
-    fillColor: 'transparent',
-    smoothing: 0.5,
-    showControlPoints: true,
-    snapToGrid: false,
-  }
+  private settings: ToolSettings = { ...PEN_TOOL_DEFAULTS }
 
   // 预览元素
   private previewPath: fabric.Path | null = null
@@ -45,16 +41,20 @@ export class PenTool {
   }
 
   activate(settings: ToolSettings = {}) {
-    if (!this.canvas) return
+    try {
+      penToolErrorHandler.validateCanvas(this.canvas)
 
-    this.isActive = true
-    this.settings = { ...this.settings, ...settings }
-    this.canvas.defaultCursor = 'crosshair'
-    this.canvas.selection = false
-    
-    this.setupEventListeners()
-    this.showInstructions()
-    this.state.mode = 'drawing'
+      this.isActive = true
+      this.settings = { ...this.settings, ...settings }
+      this.canvas!.defaultCursor = 'crosshair'
+      this.canvas!.selection = false
+      
+      this.setupEventListeners()
+      this.showInstructions()
+      this.state.mode = 'drawing'
+    } catch (error) {
+      penToolErrorHandler.handleError(error as Error, 'activate', { settings })
+    }
   }
 
   deactivate() {
@@ -97,33 +97,38 @@ export class PenTool {
   }
 
   private onMouseDown = (e: fabric.TEvent<fabric.TPointerEvent>) => {
-    if (!this.canvas || !e.e) return
+    try {
+      if (!this.canvas || !e.e) return
 
-    // 防止事件冒泡影响到其它层的 mouse 处理器（如 CanvasArea），避免需要点击两次
-    const evt = e.e as MouseEvent
-    evt.preventDefault?.()
-    evt.stopPropagation?.()
+      // 防止事件冒泡影响到其它层的 mouse 处理器（如 CanvasArea），避免需要点击两次
+      const evt = e.e as MouseEvent
+      evt.preventDefault?.()
+      evt.stopPropagation?.()
 
-    // 刚刚完成/闭合后的短暂时间内忽略一次按下，避免新路径从相同点开始
-    if (Date.now() - this.lastFinalizeTs < 400) {
-      return
-    }
+      // 刚刚完成/闭合后的短暂时间内忽略一次按下，避免新路径从相同点开始
+      if (Date.now() - this.lastFinalizeTs < PEN_TOOL_CONFIG.FINALIZE_SUPPRESS_TIME) {
+        return
+      }
 
-    // 抑制双击的第二下，避免在闭合后立刻把同一点当作新路径起点
-    if (this.suppressNextMouseDown) {
-      this.suppressNextMouseDown = false
-      return
-    }
+      // 抑制双击的第二下，避免在闭合后立刻把同一点当作新路径起点
+      if (this.suppressNextMouseDown) {
+        this.suppressNextMouseDown = false
+        return
+      }
 
-    const pointer = this.canvas.getPointer(e.e)
-    
-    switch (this.state.mode) {
-      case 'drawing':
-        this.handleDrawingMouseDown(pointer, evt)
-        break
-      case 'editing':
-        this.handleEditingMouseDown(pointer)
-        break
+      const pointer = this.canvas.getPointer(e.e)
+      penToolErrorHandler.validatePoint(pointer)
+      
+      switch (this.state.mode) {
+        case 'drawing':
+          this.handleDrawingMouseDown(pointer, evt)
+          break
+        case 'editing':
+          this.handleEditingMouseDown(pointer)
+          break
+      }
+    } catch (error) {
+      penToolErrorHandler.handleError(error as Error, 'onMouseDown', { event: e })
     }
   }
 
@@ -195,8 +200,8 @@ export class PenTool {
       const firstPoint = this.state.currentPath.points[0]
       const distanceToFirst = this.getDistance(pointer, firstPoint)
       const zoom = this.canvas?.getZoom?.() ?? 1
-      // 以屏幕像素为准的命中阈值（默认约 32px），随缩放自适应
-      const closeThreshold = 32 / (zoom || 1)
+      // 以屏幕像素为准的命中阈值，随缩放自适应
+      const closeThreshold = PEN_TOOL_CONFIG.CLOSE_THRESHOLD_PX / (zoom || 1)
       
       if (distanceToFirst <= closeThreshold && this.state.currentPath.points.length >= 3) {
         // 闭合路径 - 立即处理，不等待 mouseup
@@ -210,7 +215,7 @@ export class PenTool {
         this.state.isDrawing = false
         // 设置更长的抑制时间，确保不会意外开始新路径
         this.suppressNextMouseDown = true
-        setTimeout(() => { this.suppressNextMouseDown = false }, 800)
+        setTimeout(() => { this.suppressNextMouseDown = false }, PEN_TOOL_CONFIG.MOUSEDOWN_SUPPRESS_TIME)
         return
       }
       
@@ -295,8 +300,8 @@ export class PenTool {
         const dx = lastPoint.x - prevPoint.x
         const dy = lastPoint.y - prevPoint.y
         prevPoint.controlPoint1 = {
-          x: prevPoint.x + dx * 0.3,
-          y: prevPoint.y + dy * 0.3,
+          x: prevPoint.x + dx * PEN_TOOL_CONFIG.CONTROL_POINT_DISTANCE_RATIO,
+          y: prevPoint.y + dy * PEN_TOOL_CONFIG.CONTROL_POINT_DISTANCE_RATIO,
         }
       }
     }
@@ -338,30 +343,40 @@ export class PenTool {
   }
 
   private updatePreview() {
-    if (!this.canvas || !this.state.currentPath) return
+    try {
+      if (!this.canvas || !this.state.currentPath) return
 
-    this.clearPreview()
+      const endMeasure = performanceMonitor.startMeasure('updatePreview')
+      
+      this.clearPreview()
 
-    const pathString = this.generateSVGPath(this.state.currentPath)
-    
-    if (pathString) {
-      this.previewPath = new fabric.Path(pathString, {
-        fill: this.state.currentPath.fillColor || 'transparent',
-        stroke: this.state.currentPath.strokeColor,
-        strokeWidth: this.state.currentPath.strokeWidth,
-        selectable: false,
-        evented: false,
+      const pathString = this.generateSVGPath(this.state.currentPath)
+      
+      if (pathString) {
+        this.previewPath = new fabric.Path(pathString, {
+          ...PEN_TOOL_STYLES.PREVIEW_PATH,
+          fill: this.state.currentPath.fillColor || 'transparent',
+          stroke: this.state.currentPath.strokeColor,
+          strokeWidth: this.state.currentPath.strokeWidth,
+        })
+
+        this.canvas.add(this.previewPath)
+      }
+
+      // 显示控制点
+      if (this.settings.showControlPoints) {
+        this.showControlPoints()
+      }
+
+      // 使用渲染优化器
+      renderOptimizer.scheduleRender(() => {
+        this.canvas?.renderAll()
       })
-
-      this.canvas.add(this.previewPath)
+      
+      endMeasure()
+    } catch (error) {
+      penToolErrorHandler.handleError(error as Error, 'updatePreview')
     }
-
-    // 显示控制点
-    if (this.settings.showControlPoints) {
-      this.showControlPoints()
-    }
-
-    this.canvas.renderAll()
   }
 
   private generateSVGPath(path: BezierPath): string {
@@ -399,13 +414,19 @@ export class PenTool {
       const isFirstPoint = index === 0
       const canClose = this.state.mode === 'drawing' && this.state.currentPath!.points.length >= 3
       
+      const style = isFirstPoint && canClose
+        ? PEN_TOOL_STYLES.ANCHOR_POINT.CLOSABLE
+        : PEN_TOOL_STYLES.ANCHOR_POINT.NORMAL
+      
       const anchorPoint = new fabric.Circle({
         left: point.x,
         top: point.y,
-        radius: isFirstPoint && canClose ? 6 : 4,
-        fill: isFirstPoint && canClose ? '#28a745' : '#007bff',
-        stroke: '#ffffff',
-        strokeWidth: isFirstPoint && canClose ? 3 : 2,
+        radius: isFirstPoint && canClose
+          ? PEN_TOOL_CONFIG.ANCHOR_POINT_RADIUS_CLOSABLE
+          : PEN_TOOL_CONFIG.ANCHOR_POINT_RADIUS,
+        fill: style.fill,
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
         selectable: false,
         evented: false,
         originX: 'center',
@@ -424,10 +445,10 @@ export class PenTool {
         const controlPoint1 = new fabric.Circle({
           left: point.controlPoint1.x,
           top: point.controlPoint1.y,
-          radius: 3,
-          fill: '#28a745',
-          stroke: '#ffffff',
-          strokeWidth: 1,
+          radius: PEN_TOOL_CONFIG.CONTROL_POINT_RADIUS,
+          fill: PEN_TOOL_STYLES.CONTROL_POINT.POINT1.fill,
+          stroke: PEN_TOOL_STYLES.CONTROL_POINT.POINT1.stroke,
+          strokeWidth: PEN_TOOL_STYLES.CONTROL_POINT.POINT1.strokeWidth,
           selectable: this.state.mode === 'editing',
           evented: this.state.mode === 'editing',
           originX: 'center',
@@ -438,8 +459,8 @@ export class PenTool {
           point.x, point.y,
           point.controlPoint1.x, point.controlPoint1.y
         ], {
-          stroke: '#28a745',
-          strokeWidth: 1,
+          stroke: PEN_TOOL_STYLES.CONTROL_LINE.POINT1.stroke,
+          strokeWidth: PEN_TOOL_STYLES.CONTROL_LINE.POINT1.strokeWidth,
           selectable: false,
           evented: false,
         })
@@ -457,10 +478,10 @@ export class PenTool {
         const controlPoint2 = new fabric.Circle({
           left: point.controlPoint2.x,
           top: point.controlPoint2.y,
-          radius: 3,
-          fill: '#dc3545',
-          stroke: '#ffffff',
-          strokeWidth: 1,
+          radius: PEN_TOOL_CONFIG.CONTROL_POINT_RADIUS,
+          fill: PEN_TOOL_STYLES.CONTROL_POINT.POINT2.fill,
+          stroke: PEN_TOOL_STYLES.CONTROL_POINT.POINT2.stroke,
+          strokeWidth: PEN_TOOL_STYLES.CONTROL_POINT.POINT2.strokeWidth,
           selectable: this.state.mode === 'editing',
           evented: this.state.mode === 'editing',
           originX: 'center',
@@ -471,8 +492,8 @@ export class PenTool {
           point.x, point.y,
           point.controlPoint2.x, point.controlPoint2.y
         ], {
-          stroke: '#dc3545',
-          strokeWidth: 1,
+          stroke: PEN_TOOL_STYLES.CONTROL_LINE.POINT2.stroke,
+          strokeWidth: PEN_TOOL_STYLES.CONTROL_LINE.POINT2.strokeWidth,
           selectable: false,
           evented: false,
         })
@@ -536,57 +557,70 @@ export class PenTool {
   }
 
   private closeCurrentPath() {
-    if (!this.canvas || !this.state.currentPath || this.isClosing) return
+    try {
+      if (!this.canvas || !this.state.currentPath || this.isClosing) return
 
-    // 设置闭合标志，防止重复执行
-    this.isClosing = true
+      const endMeasure = performanceMonitor.startMeasure('closeCurrentPath')
 
-    // 标记路径为闭合
-    this.state.currentPath.closed = true
-    
-    // 先清理预览，避免重叠显示
-    this.clearPreview()
-    
-    // 创建最终的闭合路径对象
-    const pathString = this.generateSVGPath(this.state.currentPath)
-    
-    if (pathString) {
+      // 设置闭合标志，防止重复执行
+      this.isClosing = true
+
+      // 标记路径为闭合
+      this.state.currentPath.closed = true
+      
+      // 先清理预览，避免重叠显示
+      this.clearPreview()
+      
+      // 创建最终的闭合路径对象
+      const pathString = this.generateSVGPath(this.state.currentPath)
+      
+      if (!pathString) {
+        throw new PenToolError(
+          PenToolErrorType.PATH_ERROR,
+          PEN_TOOL_MESSAGES.ERRORS.PATH_GENERATION_FAILED
+        )
+      }
+
       const finalPath = new fabric.Path(pathString, {
+        ...PEN_TOOL_STYLES.FINAL_PATH,
         fill: this.state.currentPath.fillColor || 'transparent',
         stroke: this.state.currentPath.strokeColor,
         strokeWidth: this.state.currentPath.strokeWidth,
-        selectable: false,
-        evented: false,
       })
 
       this.canvas.add(finalPath)
       
       // 立即强制渲染画布，确保用户能看到闭合的路径
       this.canvas.renderAll()
+
+      // 清理状态，确保完全重置
+      this.state.currentPath = null
+      this.state.isDrawing = false
+      this.state.mode = 'drawing'
+      this.state.selectedPoint = null
+      this.state.selectedPointIndex = -1
+      
+      // 设置完成时间戳，防止立即开始新路径
+      this.lastFinalizeTs = Date.now()
+      
+      console.log(PEN_TOOL_MESSAGES.INFO.PATH_CLOSED)
+
+      // 延迟重置闭合标志，确保当前事件周期完成
+      setTimeout(() => {
+        this.isClosing = false
+      }, PEN_TOOL_CONFIG.CLOSING_FLAG_RESET_TIME)
+
+      endMeasure()
+    } catch (error) {
+      this.isClosing = false // 确保在错误时重置标志
+      penToolErrorHandler.handleError(error as Error, 'closeCurrentPath')
     }
-
-    // 清理状态，确保完全重置
-    this.state.currentPath = null
-    this.state.isDrawing = false
-    this.state.mode = 'drawing'
-    this.state.selectedPoint = null
-    this.state.selectedPointIndex = -1
-    
-    // 设置完成时间戳，防止立即开始新路径
-    this.lastFinalizeTs = Date.now()
-    
-    console.log('路径已闭合')
-
-    // 延迟重置闭合标志，确保当前事件周期完成
-    setTimeout(() => {
-      this.isClosing = false
-    }, 100)
   }
 
   private getPointAtPosition(pointer: fabric.Point): { point: BezierPoint; index: number } | null {
     if (!this.state.currentPath) return null
 
-    const threshold = 8 // 点击检测阈值
+    const threshold = PEN_TOOL_CONFIG.POINT_DETECTION_THRESHOLD
 
     for (let i = 0; i < this.state.currentPath.points.length; i++) {
       const point = this.state.currentPath.points[i]
@@ -630,7 +664,7 @@ export class PenTool {
   }
 
   private showInstructions() {
-    console.log('钢笔工具已激活 - 点击创建锚点，拖拽调整贝塞尔曲线，双击完成路径')
+    console.log(PEN_TOOL_MESSAGES.INFO.TOOL_ACTIVATED)
   }
 
   private resetState() {
