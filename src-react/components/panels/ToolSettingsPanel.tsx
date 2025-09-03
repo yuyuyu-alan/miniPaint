@@ -388,6 +388,123 @@ const ToolSettingsPanel: React.FC = () => {
     </div>
   )
 
+  const renderPenSettings = () => (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          描边颜色
+        </label>
+        <div className="flex items-center space-x-2">
+          <input
+            type="color"
+            value={currentSettings.strokeColor || '#000000'}
+            onChange={(e) => handleSettingChange('strokeColor', e.target.value)}
+            className="w-8 h-8 rounded border border-gray-300"
+          />
+          <Input
+            type="text"
+            value={currentSettings.strokeColor || '#000000'}
+            onChange={(e) => handleSettingChange('strokeColor', e)}
+            className="flex-1 text-sm"
+            size="sm"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          填充颜色
+        </label>
+        <div className="flex items-center space-x-2">
+          <input
+            type="color"
+            value={currentSettings.fillColor === 'transparent' ? '#ffffff' : currentSettings.fillColor || '#ffffff'}
+            onChange={(e) => handleSettingChange('fillColor', e.target.value)}
+            className="w-8 h-8 rounded border border-gray-300"
+          />
+          <Input
+            type="text"
+            value={currentSettings.fillColor || 'transparent'}
+            onChange={(e) => handleSettingChange('fillColor', e)}
+            className="flex-1 text-sm"
+            size="sm"
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleSettingChange('fillColor', 'transparent')}
+            title="透明填充"
+          >
+            ∅
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          描边宽度
+        </label>
+        <div className="flex items-center space-x-2">
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={currentSettings.strokeWidth || 2}
+            onChange={(e) => handleSettingChange('strokeWidth', parseInt(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-sm text-gray-600 w-8">
+            {currentSettings.strokeWidth || 2}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          平滑度
+        </label>
+        <div className="flex items-center space-x-2">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={currentSettings.smoothing || 0.5}
+            onChange={(e) => handleSettingChange('smoothing', parseFloat(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-sm text-gray-600 w-12">
+            {(currentSettings.smoothing || 0.5).toFixed(1)}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={currentSettings.showControlPoints !== false}
+            onChange={(e) => handleSettingChange('showControlPoints', e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          <span className="text-sm text-gray-700">显示控制点</span>
+        </label>
+      </div>
+
+      <div>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={currentSettings.snapToGrid || false}
+            onChange={(e) => handleSettingChange('snapToGrid', e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          <span className="text-sm text-gray-700">对齐网格</span>
+        </label>
+      </div>
+    </div>
+  )
+
   const renderToolSettings = () => {
     switch (activeTool) {
       case 'brush':
@@ -405,6 +522,8 @@ const ToolSettingsPanel: React.FC = () => {
         return renderFillSettings()
       case 'clone':
         return renderCloneSettings()
+      case 'pen':
+        return renderPenSettings()
       default:
         return (
           <div className="text-center text-gray-500 py-4">
@@ -428,6 +547,7 @@ const ToolSettingsPanel: React.FC = () => {
       erase: '橡皮擦工具',
       clone: '仿制工具',
       pick_color: '吸色器工具',
+      pen: '钢笔工具',
     }
     return names[tool] || tool
   }
