@@ -8,6 +8,7 @@ import EffectPanel from '@/components/panels/EffectPanel'
 import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CanvasArea from '@/components/canvas/CanvasArea'
+import AITestPanel from '@/components/AITestPanel'
 import { useUIStore } from '@/stores/ui'
 import { useResponsive } from '@/hooks/useResponsive'
 
@@ -86,13 +87,23 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={() => togglePanel('effects')}
-                className={`px-3 py-2 text-sm transition-colors ${
+                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
                   panelVisibility.effects
                     ? 'bg-white text-gray-900 border-b-2 border-blue-500'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 效果
+              </button>
+              <button
+                onClick={() => togglePanel('ai')}
+                className={`px-3 py-2 text-sm transition-colors ${
+                  panelVisibility.ai
+                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                🤖 AI测试
               </button>
             </div>
 
@@ -126,8 +137,15 @@ const App: React.FC = () => {
                 </div>
               )}
 
+              {/* AI测试面板 */}
+              {panelVisibility.ai && (
+                <div className="h-full">
+                  <AITestPanel />
+                </div>
+              )}
+
               {/* 默认显示图层面板 */}
-              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.properties && !panelVisibility.effects && (
+              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.properties && !panelVisibility.effects && !panelVisibility.ai && (
                 <div className="h-full">
                   <LayerPanel />
                 </div>

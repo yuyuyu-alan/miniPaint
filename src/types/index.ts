@@ -120,6 +120,7 @@ export interface UIState {
     properties: boolean
     colors: boolean
     effects: boolean
+    ai: boolean
   }
   modalOpen: string | null
 }

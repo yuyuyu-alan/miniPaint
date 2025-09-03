@@ -47,6 +47,7 @@ export const useUIStore = create<UIStore>()(
         properties: false, // 默认隐藏属性面板
         colors: false,     // 默认隐藏颜色面板
         effects: false,    // 默认隐藏效果面板
+        ai: false,         // 默认隐藏AI测试面板
       },
       modalOpen: null,
       
@@ -112,6 +113,7 @@ export const useUIStore = create<UIStore>()(
                 properties: panel === 'properties',
                 colors: panel === 'colors',
                 effects: panel === 'effects',
+                ai: panel === 'ai',
               },
             }
           }
