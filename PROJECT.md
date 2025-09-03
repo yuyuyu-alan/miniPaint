@@ -23,7 +23,7 @@
 
 2. **项目结构搭建**
    ```
-   src-react/
+   src/
    ├── components/    # UI组件
    ├── hooks/         # 自定义Hooks
    ├── stores/        # Zustand状态管理

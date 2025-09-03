@@ -7,15 +7,15 @@ export default defineConfig({
   plugins: [react(), UnoCSS()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src-react'),
-      '@/components': resolve(__dirname, './src-react/components'),
-      '@/hooks': resolve(__dirname, './src-react/hooks'),
-      '@/stores': resolve(__dirname, './src-react/stores'),
-      '@/utils': resolve(__dirname, './src-react/utils'),
-      '@/types': resolve(__dirname, './src-react/types'),
-      '@/constants': resolve(__dirname, './src-react/constants'),
-      '@/workers': resolve(__dirname, './src-react/workers'),
-      '@/legacy': resolve(__dirname, './src-react/legacy'),
+      '@': resolve(__dirname, './src'),
+      '@/components': resolve(__dirname, './src/components'),
+      '@/hooks': resolve(__dirname, './src/hooks'),
+      '@/stores': resolve(__dirname, './src/stores'),
+      '@/utils': resolve(__dirname, './src/utils'),
+      '@/types': resolve(__dirname, './src/types'),
+      '@/constants': resolve(__dirname, './src/constants'),
+      '@/workers': resolve(__dirname, './src/workers'),
+      '@/legacy': resolve(__dirname, './src/legacy'),
     }
   },
   root: '.',
@@ -24,12 +24,12 @@ export default defineConfig({
     outDir: 'dist-react',
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index-react.html')
+        main: resolve(__dirname, 'index.html')
       }
     }
   },
   server: {
     port: 3000,
-    open: '/index-react.html'
+    open: '/index.html'
   }
 })

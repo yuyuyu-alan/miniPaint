@@ -23,19 +23,19 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src-react/*"],
-      "@/components/*": ["./src-react/components/*"],
-      "@/hooks/*": ["./src-react/hooks/*"],
-      "@/stores/*": ["./src-react/stores/*"],
-      "@/utils/*": ["./src-react/utils/*"],
-      "@/types/*": ["./src-react/types/*"],
-      "@/constants/*": ["./src-react/constants/*"],
-      "@/workers/*": ["./src-react/workers/*"],
-      "@/legacy/*": ["./src-react/legacy/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/stores/*": ["./src/stores/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/constants/*": ["./src/constants/*"],
+      "@/workers/*": ["./src/workers/*"],
+      "@/legacy/*": ["./src/legacy/*"]
     }
   },
   "include": [
-    "src-react/**/*"
+    "src/**/*"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
