@@ -59,6 +59,8 @@ const defaultToolSettings: Record<ToolType, ToolSettings> = {
   crop: {
     aspectRatio: 'free',
     showGrid: true,
+    preserveAspectRatio: false,
+    cropMode: 'replace',
   },
   fill: {
     fillColor: '#000000',
@@ -94,6 +96,7 @@ const toolShortcuts: Record<string, ToolType> = {
   'KeyC': 'circle',
   'KeyT': 'text',
   'KeyL': 'line',
+  'KeyK': 'crop',
   'KeyG': 'fill',
   'KeyE': 'erase',
   'KeyS': 'clone',

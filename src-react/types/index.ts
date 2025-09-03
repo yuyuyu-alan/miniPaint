@@ -53,6 +53,13 @@ export interface ToolSettings {
   smoothing?: number
   showControlPoints?: boolean
   snapToGrid?: boolean
+  
+  // 裁剪工具设置
+  aspectRatio?: 'free' | '1:1' | '4:3' | '16:9' | '3:2' | 'custom'
+  showGrid?: boolean
+  preserveAspectRatio?: boolean
+  customAspectRatio?: { width: number; height: number }
+  cropMode?: 'replace' | 'overlay'
 }
 
 // 贝塞尔曲线点类型

@@ -12,7 +12,7 @@ import { PenTool } from '@/tools/PenTool'
 import { LineTool } from '@/tools/LineTool'
 
 export const useTools = () => {
-  const { fabricCanvas } = useCanvasStore()
+  const { fabricCanvas, setDimensions } = useCanvasStore()
   const {
     activeTool,
     toolSettings,
@@ -154,7 +154,16 @@ export const useTools = () => {
         
         // 初始化裁剪工具
         if (!toolInstances.current.crop) {
-          toolInstances.current.crop = new CropTool(canvas)
+          toolInstances.current.crop = new CropTool(canvas, {
+            onCanvasResize: (width, height) => {
+              // 通过 canvas store 更新画布尺寸
+              setDimensions(width, height)
+            },
+            onCropComplete: () => {
+              // 裁剪完成后切换回选择工具
+              setActiveTool('select')
+            }
+          })
         }
         toolInstances.current.crop.activate(settings)
         break
