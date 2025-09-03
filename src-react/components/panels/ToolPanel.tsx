@@ -52,7 +52,7 @@ const ToolPanel: React.FC = () => {
                   <i className={`lucide-${iconName}`} style={{ fontSize: '16px' }} />
                 </div>
                 <span className="text-xs mt-0.5 opacity-60 group-hover:opacity-80">
-                  {shortcut}
+                  {toolName}
                 </span>
               </button>
             </Tooltip>
