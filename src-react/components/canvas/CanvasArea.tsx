@@ -192,6 +192,7 @@ const CanvasArea: React.FC = () => {
   // 鼠标按下事件
   const handleMouseDown = useCallback((e: fabric.TEvent<fabric.TPointerEvent>) => {
     if (!fabricCanvas || !e.e) return
+    if (activeTool === 'pen') return
 
     const pointer = fabricCanvas.getPointer(e.e)
     const point = new fabric.Point(pointer.x, pointer.y)
@@ -263,6 +264,7 @@ const CanvasArea: React.FC = () => {
   // 鼠标移动事件
   const handleMouseMove = useCallback((e: fabric.TEvent<fabric.TPointerEvent>) => {
     if (!fabricCanvas || !e.e || !isDrawing || !startPoint) return
+    if (activeTool === 'pen') return
 
     const pointer = fabricCanvas.getPointer(e.e)
     const currentPoint = new fabric.Point(pointer.x, pointer.y)
@@ -308,6 +310,7 @@ const CanvasArea: React.FC = () => {
   // 鼠标释放事件
   const handleMouseUp = useCallback((e: fabric.TEvent<fabric.TPointerEvent>) => {
     if (!fabricCanvas || !isDrawing) return
+    if (activeTool === 'pen') return
 
     setIsDrawing(false)
 

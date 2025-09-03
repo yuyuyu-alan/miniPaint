@@ -81,12 +81,20 @@ const defaultToolSettings: Record<ToolType, ToolSettings> = {
   pick_color: {
     sampleSize: 1,
   },
+  pen: {
+    strokeColor: '#000000',
+    strokeWidth: 2,
+    fillColor: 'transparent',
+    smoothing: 0.5,
+    showControlPoints: true,
+    snapToGrid: false,
+  },
 }
 
 // 工具快捷键映射
 const toolShortcuts: Record<string, ToolType> = {
   'KeyV': 'select',
-  'KeyB': 'brush', 
+  'KeyB': 'brush',
   'KeyR': 'rectangle',
   'KeyC': 'circle',
   'KeyT': 'text',
@@ -96,6 +104,7 @@ const toolShortcuts: Record<string, ToolType> = {
   'KeyE': 'erase',
   'KeyS': 'clone',
   'KeyI': 'pick_color',
+  'KeyP': 'pen',
 }
 
 export const useToolStore = create<ToolStore>()(

@@ -8,6 +8,7 @@ import { CropTool } from '@/tools/CropTool'
 import { FillTool } from '@/tools/FillTool'
 import { EraseTool } from '@/tools/EraseTool'
 import { CloneTool } from '@/tools/CloneTool'
+import { PenTool } from '@/tools/PenTool'
 
 export const useTools = () => {
   const { fabricCanvas } = useCanvasStore()
@@ -27,6 +28,7 @@ export const useTools = () => {
     fill?: FillTool
     erase?: EraseTool
     clone?: CloneTool
+    pen?: PenTool
   }>({})
 
   // 取消当前工具
@@ -48,6 +50,7 @@ export const useTools = () => {
     fabricCanvas.isDrawingMode = false
     fabricCanvas.selection = true
     fabricCanvas.defaultCursor = 'default'
+    fabricCanvas.skipTargetFind = false
     
     // 移除画笔
     if (fabricCanvas.freeDrawingBrush) {
@@ -193,6 +196,34 @@ export const useTools = () => {
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'
+        break
+
+      case 'pen':
+        canvas.isDrawingMode = false
+        canvas.selection = false
+        canvas.defaultCursor = 'crosshair'
+        canvas.hoverCursor = 'crosshair'
+        canvas.moveCursor = 'crosshair'
+        canvas.skipTargetFind = true
+
+        // 禁用对象交互，避免鼠标进入拖动模式
+        canvas.getObjects().forEach(obj => {
+          (obj as any).selectable = false
+          ;(obj as any).evented = false
+        })
+        
+        // 确保先取消其他工具
+        Object.entries(toolInstances.current).forEach(([key, tool]) => {
+          if (key !== 'pen' && tool && typeof tool.deactivate === 'function') {
+            tool.deactivate()
+          }
+        })
+        
+        // 初始化钢笔工具
+        if (!toolInstances.current.pen) {
+          toolInstances.current.pen = new PenTool(canvas)
+        }
+        toolInstances.current.pen.activate(settings)
         break
 
       default:
@@ -361,6 +392,7 @@ export const getToolIcon = (tool: ToolType): string => {
     erase: 'eraser',
     clone: 'copy',
     pick_color: 'pipette',
+    pen: 'pen-tool',
   }
   return iconMap[tool] || 'help-circle'
 }
@@ -380,6 +412,7 @@ export const getToolName = (tool: ToolType): string => {
     erase: '橡皮擦',
     clone: '仿制',
     pick_color: '吸色器',
+    pen: '钢笔',
   }
   return nameMap[tool] || tool
 }

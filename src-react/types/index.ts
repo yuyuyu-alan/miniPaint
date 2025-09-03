@@ -1,9 +1,9 @@
 import * as fabric from 'fabric'
 
 // 工具类型枚举
-export type ToolType = 
+export type ToolType =
   | 'select'
-  | 'brush' 
+  | 'brush'
   | 'rectangle'
   | 'circle'
   | 'text'
@@ -14,6 +14,7 @@ export type ToolType =
   | 'erase'
   | 'clone'
   | 'pick_color'
+  | 'pen'
 
 // 图层类型
 export interface Layer {
@@ -48,6 +49,41 @@ export interface ToolSettings {
   fontFamily?: string
   fontWeight?: string
   textAlign?: string
+  
+  // 钢笔工具设置
+  smoothing?: number
+  showControlPoints?: boolean
+  snapToGrid?: boolean
+}
+
+// 贝塞尔曲线点类型
+export interface BezierPoint {
+  x: number
+  y: number
+  controlPoint1?: { x: number; y: number }
+  controlPoint2?: { x: number; y: number }
+  type: 'anchor' | 'control1' | 'control2'
+}
+
+// 贝塞尔路径类型
+export interface BezierPath {
+  id: string
+  points: BezierPoint[]
+  closed: boolean
+  strokeColor: string
+  strokeWidth: number
+  fillColor?: string
+  visible: boolean
+}
+
+// 钢笔工具状态类型
+export interface PenToolState {
+  mode: 'drawing' | 'editing' | 'idle'
+  currentPath: BezierPath | null
+  selectedPoint: BezierPoint | null
+  selectedPointIndex: number
+  isDrawing: boolean
+  showPreview: boolean
 }
 
 // Canvas 状态类型

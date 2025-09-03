@@ -235,6 +235,82 @@ const PropertyPanel: React.FC = () => {
           </div>
         )
 
+      case 'pen':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">描边宽度</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  value={currentSettings.strokeWidth || 2}
+                  onChange={(e) => updateToolSettings(activeTool, { strokeWidth: parseInt(e.target.value) })}
+                  className="flex-1"
+                />
+                <span className="text-sm text-gray-600 w-8">{currentSettings.strokeWidth || 2}</span>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">平滑度</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={currentSettings.smoothing || 0.5}
+                  onChange={(e) => updateToolSettings(activeTool, { smoothing: parseFloat(e.target.value) })}
+                  className="flex-1"
+                />
+                <span className="text-sm text-gray-600 w-8">{((currentSettings.smoothing || 0.5) * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">描边</label>
+                <input
+                  type="color"
+                  value={currentSettings.strokeColor || colors.primary}
+                  onChange={(e) => updateToolSettings(activeTool, { strokeColor: e.target.value })}
+                  className="w-full h-8 rounded border"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">填充</label>
+                <input
+                  type="color"
+                  value={currentSettings.fillColor || 'transparent'}
+                  onChange={(e) => updateToolSettings(activeTool, { fillColor: e.target.value })}
+                  className="w-full h-8 rounded border"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={currentSettings.showControlPoints !== false}
+                  onChange={(e) => updateToolSettings(activeTool, { showControlPoints: e.target.checked })}
+                />
+                显示控制点
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={currentSettings.snapToGrid || false}
+                  onChange={(e) => updateToolSettings(activeTool, { snapToGrid: e.target.checked })}
+                />
+                对齐网格
+              </label>
+            </div>
+          </div>
+        )
+
       default:
         return (
           <div className="text-center text-gray-500 py-8">
@@ -339,6 +415,7 @@ const PropertyPanel: React.FC = () => {
                activeTool === 'line' ? '直线工具' :
                activeTool === 'arrow' ? '箭头工具' :
                activeTool === 'erase' ? '橡皮工具' :
+               activeTool === 'pen' ? '钢笔工具' :
                activeTool}属性
             </h4>
             {renderToolProperties()}

@@ -5,14 +5,14 @@ import type { ToolType } from '@/types'
 
 const tools: ToolType[] = [
   'select', 'brush', 'rectangle', 'circle', 'text', 'line',
-  'arrow', 'crop', 'fill', 'erase', 'clone', 'pick_color'
+  'arrow', 'crop', 'fill', 'erase', 'clone', 'pick_color', 'pen'
 ]
 
 // 快捷键映射显示
 const shortcutKeys: Record<ToolType, string> = {
   select: 'V', brush: 'B', rectangle: 'R', circle: 'C',
   text: 'T', line: 'L', arrow: 'A', crop: 'K',
-  fill: 'G', erase: 'E', clone: 'S', pick_color: 'I'
+  fill: 'G', erase: 'E', clone: 'S', pick_color: 'I', pen: 'P'
 }
 
 const ToolPanel: React.FC = () => {
