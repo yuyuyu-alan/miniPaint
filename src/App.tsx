@@ -2,7 +2,6 @@ import React from 'react'
 import MenuBar from '@/components/MenuBar'
 import ToolPanel from '@/components/panels/ToolPanel'
 import LayerPanel from '@/components/panels/LayerPanel'
-import EffectPanel from '@/components/panels/EffectPanel'
 import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CanvasArea from '@/components/canvas/CanvasArea'
@@ -66,16 +65,6 @@ const App: React.FC = () => {
               >
                 图层
               </button>
-              <button
-                onClick={() => togglePanel('effects')}
-                className={`px-3 py-2 text-sm transition-colors ${
-                  panelVisibility.effects
-                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                效果
-              </button>
             </div>
 
             {/* 面板内容区域 */}
@@ -89,15 +78,9 @@ const App: React.FC = () => {
               
               
               
-              {/* 效果面板 */}
-              {panelVisibility.effects && (
-                <div className="h-full">
-                  <EffectPanel />
-                </div>
-              )}
 
               {/* 默认显示图层面板 */}
-              {!panelVisibility.layers && !panelVisibility.effects && (
+              {!panelVisibility.layers && (
                 <div className="h-full">
                   <LayerPanel />
                 </div>

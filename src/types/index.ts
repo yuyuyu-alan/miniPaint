@@ -117,7 +117,6 @@ export interface UIState {
   panelVisibility: {
     layers: boolean
     tools: boolean
-    effects: boolean
     ai: boolean
   }
   modalOpen: string | null
