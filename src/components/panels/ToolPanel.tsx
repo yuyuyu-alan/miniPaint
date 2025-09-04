@@ -125,25 +125,6 @@ const ToolPanel: React.FC = () => {
           </div>
         )}
       </div>
-      
-      {/* 工具设置按钮 */}
-      <div className="p-2">
-        <Tooltip content="工具设置" position="right">
-          <button
-            className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600"
-          >
-            <i className="lucide-settings" style={{ fontSize: '16px' }} />
-          </button>
-        </Tooltip>
-      </div>
-      
-      {/* 当前工具信息 */}
-      <div className="mt-auto p-2">
-        <div className="text-xs text-center text-gray-500">
-          <div className="font-medium">{getToolName(activeTool)}</div>
-          <div className="opacity-70">({shortcutKeys[activeTool]})</div>
-        </div>
-      </div>
 
     </div>
   )
