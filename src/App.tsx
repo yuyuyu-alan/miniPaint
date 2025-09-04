@@ -2,7 +2,6 @@ import React from 'react'
 import MenuBar from '@/components/MenuBar'
 import ToolPanel from '@/components/panels/ToolPanel'
 import LayerPanel from '@/components/panels/LayerPanel'
-import PropertyPanel from '@/components/panels/PropertyPanel'
 import ColorPanel from '@/components/panels/ColorPanel'
 import EffectPanel from '@/components/panels/EffectPanel'
 import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
@@ -79,16 +78,6 @@ const App: React.FC = () => {
                 颜色
               </button>
               <button
-                onClick={() => togglePanel('properties')}
-                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
-                  panelVisibility.properties
-                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                属性
-              </button>
-              <button
                 onClick={() => togglePanel('effects')}
                 className={`px-3 py-2 text-sm transition-colors ${
                   panelVisibility.effects
@@ -116,12 +105,6 @@ const App: React.FC = () => {
                 </div>
               )}
               
-              {/* 属性面板 */}
-              {panelVisibility.properties && (
-                <div className="h-full">
-                  <PropertyPanel />
-                </div>
-              )}
               
               {/* 效果面板 */}
               {panelVisibility.effects && (
@@ -131,7 +114,7 @@ const App: React.FC = () => {
               )}
 
               {/* 默认显示图层面板 */}
-              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.properties && !panelVisibility.effects && (
+              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.effects && (
                 <div className="h-full">
                   <LayerPanel />
                 </div>

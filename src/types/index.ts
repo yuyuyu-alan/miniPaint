@@ -117,7 +117,6 @@ export interface UIState {
   panelVisibility: {
     layers: boolean
     tools: boolean
-    properties: boolean
     colors: boolean
     effects: boolean
     ai: boolean
