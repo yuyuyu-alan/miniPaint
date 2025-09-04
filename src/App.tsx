@@ -29,11 +29,6 @@ const App: React.FC = () => {
       {/* 顶部菜单栏 */}
       <MenuBar />
 
-      {/* 工具设置面板 - 横向布局 */}
-      <div className="flex-shrink-0 border-b border-gray-200">
-        <ToolSettingsPanel />
-      </div>
-
       {/* 主内容区域 */}
       <div className="flex-1 flex overflow-hidden">
         {/* 左侧工具面板 */}
@@ -46,8 +41,16 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* 中央画布区域 */}
-        <CanvasArea />
+        {/* 中间区域：工具设置面板 + 画布区域 */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* 工具设置面板 - 横向布局 */}
+          <div className="flex-shrink-0 border-b border-gray-200">
+            <ToolSettingsPanel />
+          </div>
+
+          {/* 中央画布区域 */}
+          <CanvasArea />
+        </div>
 
         {/* 右侧面板区域 - Photoshop风格标签式面板 */}
         <div className="flex-shrink-0 flex">
