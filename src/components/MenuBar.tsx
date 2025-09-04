@@ -251,7 +251,6 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
         { type: 'divider' as const },
         { label: '工具面板', action: () => useUIStore.getState().togglePanel('tools') },
         { label: '图层面板', action: () => useUIStore.getState().togglePanel('layers') },
-        { label: '颜色面板', action: () => useUIStore.getState().togglePanel('colors') },
         { label: '效果面板', action: () => useUIStore.getState().togglePanel('effects') },
         { label: 'AI助手面板', action: () => useUIStore.getState().togglePanel('ai') },
         { type: 'divider' as const },

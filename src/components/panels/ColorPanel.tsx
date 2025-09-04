@@ -24,13 +24,8 @@ const ColorPanel: React.FC = () => {
   ]
 
   return (
-    <div className="w-64 bg-white border-l border-gray-200 flex flex-col">
-      {/* 头部 */}
-      <div className="panel-header">
-        <h3 className="font-medium text-gray-900">颜色</h3>
-      </div>
-
-      <div className="flex-1 p-3 space-y-4">
+    <div className="w-full bg-white flex flex-col">
+      <div className="p-4 space-y-4">
         {/* 主要颜色 */}
         <div className="space-y-3">
           {/* 前景色 */}
@@ -187,18 +182,17 @@ const ColorPanel: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* 颜色信息 */}
-      <div className="border-t border-gray-200 p-3 bg-gray-50">
-        <div className="text-xs text-gray-500 space-y-1">
-          <div className="flex justify-between">
-            <span>调色板:</span>
-            <span>{colors.swatches.length}/24</span>
-          </div>
-          <div className="flex justify-between">
-            <span>最近使用:</span>
-            <span>{colors.recentColors.length}/10</span>
+        {/* 颜色信息 */}
+        <div className="border-t border-gray-200 pt-3 mt-4">
+          <div className="text-xs text-gray-500 space-y-1">
+            <div className="flex justify-between">
+              <span>调色板:</span>
+              <span>{colors.swatches.length}/24</span>
+            </div>
+            <div className="flex justify-between">
+              <span>最近使用:</span>
+              <span>{colors.recentColors.length}/10</span>
+            </div>
           </div>
         </div>
       </div>

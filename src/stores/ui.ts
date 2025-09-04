@@ -44,7 +44,6 @@ export const useUIStore = create<UIStore>()(
       panelVisibility: {
         layers: true,      // 默认显示图层面板
         tools: true,       // 始终显示工具面板
-        colors: false,     // 默认隐藏颜色面板
         effects: false,    // 默认隐藏效果面板
         ai: true,          // 默认显示AI助手面板
       },
@@ -109,7 +108,6 @@ export const useUIStore = create<UIStore>()(
               panelVisibility: {
                 layers: panel === 'layers',
                 tools: state.panelVisibility.tools, // 工具面板保持不变
-                colors: panel === 'colors',
                 effects: panel === 'effects',
                 ai: panel === 'ai',
               },
