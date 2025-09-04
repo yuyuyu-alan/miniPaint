@@ -90,23 +90,13 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={() => togglePanel('effects')}
-                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
+                className={`px-3 py-2 text-sm transition-colors ${
                   panelVisibility.effects
                     ? 'bg-white text-gray-900 border-b-2 border-blue-500'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 效果
-              </button>
-              <button
-                onClick={() => togglePanel('ai')}
-                className={`px-3 py-2 text-sm transition-colors ${
-                  panelVisibility.ai
-                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                🤖 AI测试
               </button>
             </div>
 
@@ -140,21 +130,38 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* AI测试面板 */}
-              {panelVisibility.ai && (
-                <div className="h-full">
-                  <AITestPanel />
-                </div>
-              )}
-
               {/* 默认显示图层面板 */}
-              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.properties && !panelVisibility.effects && !panelVisibility.ai && (
+              {!panelVisibility.layers && !panelVisibility.colors && !panelVisibility.properties && !panelVisibility.effects && (
                 <div className="h-full">
                   <LayerPanel />
                 </div>
               )}
             </div>
           </div>
+
+          {/* AI面板 - 独立面板 */}
+          {panelVisibility.ai && (
+            <div className="flex-shrink-0 flex flex-col bg-gray-100 border-l border-gray-300" style={{ width: getPanelWidth() }}>
+              {/* AI面板标题栏 */}
+              <div className="bg-gray-200 border-b border-gray-300 flex">
+                <div className="px-3 py-2 text-sm bg-white text-gray-900 border-b-2 border-blue-500 flex-1">
+                  🤖 AI助手
+                </div>
+                <button
+                  onClick={() => togglePanel('ai')}
+                  className="px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 border-l border-gray-300"
+                  title="关闭AI面板"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* AI面板内容区域 */}
+              <div className="flex-1 bg-white overflow-hidden">
+                <AITestPanel />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

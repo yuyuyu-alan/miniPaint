@@ -254,6 +254,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
         { label: '属性面板', action: () => useUIStore.getState().togglePanel('properties') },
         { label: '颜色面板', action: () => useUIStore.getState().togglePanel('colors') },
         { label: '效果面板', action: () => useUIStore.getState().togglePanel('effects') },
+        { label: 'AI助手面板', action: () => useUIStore.getState().togglePanel('ai') },
         { type: 'divider' as const },
         { label: theme === 'dark' ? '浅色模式' : '深色模式', action: toggleTheme },
       ]
@@ -284,13 +285,28 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
 
           {/* 右侧操作 */}
           <div className="ml-auto flex items-center space-x-2">
+            {/* AI助手快速切换按钮 */}
+            <button
+              onClick={() => useUIStore.getState().togglePanel('ai')}
+              className={`px-2 py-1 text-sm rounded transition-colors ${
+                useUIStore.getState().panelVisibility.ai
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+              title="AI助手面板"
+            >
+              🤖
+            </button>
+            
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+            
             {/* 撤销重做按钮 */}
             <button
               onClick={handleUndo}
               disabled={!canUndo()}
               className={`px-2 py-1 text-sm rounded transition-colors ${
-                canUndo() 
-                  ? 'text-gray-700 hover:bg-gray-100' 
+                canUndo()
+                  ? 'text-gray-700 hover:bg-gray-100'
                   : 'text-gray-400 cursor-not-allowed'
               }`}
               title="撤销 (Ctrl+Z)"
@@ -301,8 +317,8 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
               onClick={handleRedo}
               disabled={!canRedo()}
               className={`px-2 py-1 text-sm rounded transition-colors ${
-                canRedo() 
-                  ? 'text-gray-700 hover:bg-gray-100' 
+                canRedo()
+                  ? 'text-gray-700 hover:bg-gray-100'
                   : 'text-gray-400 cursor-not-allowed'
               }`}
               title="重做 (Ctrl+Y)"
