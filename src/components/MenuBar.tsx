@@ -250,7 +250,6 @@ const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
         { label: '适合窗口', shortcut: 'Ctrl+0', action: handleZoomFit },
         { type: 'divider' as const },
         { label: '工具面板', action: () => useUIStore.getState().togglePanel('tools') },
-        { label: '图层面板', action: () => useUIStore.getState().togglePanel('layers') },
         { label: 'AI助手面板', action: () => useUIStore.getState().togglePanel('ai') },
         { type: 'divider' as const },
         { label: theme === 'dark' ? '浅色模式' : '深色模式', action: toggleTheme },

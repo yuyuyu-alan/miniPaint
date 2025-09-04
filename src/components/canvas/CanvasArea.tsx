@@ -439,9 +439,9 @@ const CanvasArea: React.FC = () => {
   }, [fabricCanvas, width, height])
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={`flex-1 relative bg-gray-100 flex items-center justify-center overflow-hidden transition-all ${
+      className={`w-full h-full relative bg-gray-100 flex items-center justify-center overflow-hidden transition-all ${
         isDragOver ? 'bg-blue-50 border-2 border-dashed border-blue-400' : ''
       }`}
     >

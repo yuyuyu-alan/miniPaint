@@ -42,7 +42,6 @@ export const useUIStore = create<UIStore>()(
       theme: 'auto',
       sidebarCollapsed: false,
       panelVisibility: {
-        layers: true,      // 默认显示图层面板
         tools: true,       // 始终显示工具面板
         ai: true,          // 默认显示AI助手面板
       },
@@ -105,7 +104,6 @@ export const useUIStore = create<UIStore>()(
             // 否则关闭所有面板，只打开点击的面板
             return {
               panelVisibility: {
-                layers: panel === 'layers',
                 tools: state.panelVisibility.tools, // 工具面板保持不变
                 ai: panel === 'ai',
               },

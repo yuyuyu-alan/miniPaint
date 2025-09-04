@@ -115,7 +115,6 @@ export interface UIState {
   theme: 'light' | 'dark' | 'auto'
   sidebarCollapsed: boolean
   panelVisibility: {
-    layers: boolean
     tools: boolean
     ai: boolean
   }

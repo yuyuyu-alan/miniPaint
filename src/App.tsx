@@ -1,7 +1,7 @@
 import React from 'react'
 import MenuBar from '@/components/MenuBar'
 import ToolPanel from '@/components/panels/ToolPanel'
-import LayerPanel from '@/components/panels/LayerPanel'
+import RightMenuPanel from '@/components/panels/RightMenuPanel'
 import ToolSettingsPanel from '@/components/panels/ToolSettingsPanel'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import CanvasArea from '@/components/canvas/CanvasArea'
@@ -38,80 +38,48 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* 中间区域：工具设置面板 + 画布区域 */}
+        {/* 中间区域：工具设置面板 + 画布区域 + 竖型菜单 */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* 工具设置面板 - 横向布局 */}
           <div className="flex-shrink-0 border-b border-gray-200">
             <ToolSettingsPanel />
           </div>
 
-          {/* 中央画布区域 */}
-          <CanvasArea />
+          {/* 画布区域 + 竖型菜单 */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* 中央画布区域 */}
+            <div className="flex-1 h-full">
+              <CanvasArea />
+            </div>
+
+            {/* 竖型菜单 */}
+            <RightMenuPanel />
+          </div>
         </div>
 
-        {/* 右侧面板区域 - Photoshop风格标签式面板 */}
-        <div className="flex-shrink-0 flex">
-          {/* 主面板区域 - 标签式 */}
+        {/* AI面板 - 独立面板 */}
+        {panelVisibility.ai && (
           <div className="flex-shrink-0 flex flex-col bg-gray-100 border-l border-gray-300" style={{ width: getPanelWidth() }}>
-            {/* 面板标签栏 */}
+            {/* AI面板标题栏 */}
             <div className="bg-gray-200 border-b border-gray-300 flex">
+              <div className="px-3 py-2 text-sm bg-white text-gray-900 border-b-2 border-blue-500 flex-1">
+                🤖 AI助手
+              </div>
               <button
-                onClick={() => togglePanel('layers')}
-                className={`px-3 py-2 text-sm border-r border-gray-300 transition-colors ${
-                  panelVisibility.layers
-                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                onClick={() => togglePanel('ai')}
+                className="px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 border-l border-gray-300"
+                title="关闭AI面板"
               >
-                图层
+                ×
               </button>
             </div>
 
-            {/* 面板内容区域 */}
+            {/* AI面板内容区域 */}
             <div className="flex-1 bg-white overflow-hidden">
-              {/* 图层面板 */}
-              {panelVisibility.layers && (
-                <div className="h-full">
-                  <LayerPanel />
-                </div>
-              )}
-              
-              
-              
-
-              {/* 默认显示图层面板 */}
-              {!panelVisibility.layers && (
-                <div className="h-full">
-                  <LayerPanel />
-                </div>
-              )}
+              <AITestPanel />
             </div>
           </div>
-
-          {/* AI面板 - 独立面板 */}
-          {panelVisibility.ai && (
-            <div className="flex-shrink-0 flex flex-col bg-gray-100 border-l border-gray-300" style={{ width: getPanelWidth() }}>
-              {/* AI面板标题栏 */}
-              <div className="bg-gray-200 border-b border-gray-300 flex">
-                <div className="px-3 py-2 text-sm bg-white text-gray-900 border-b-2 border-blue-500 flex-1">
-                  🤖 AI助手
-                </div>
-                <button
-                  onClick={() => togglePanel('ai')}
-                  className="px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 border-l border-gray-300"
-                  title="关闭AI面板"
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* AI面板内容区域 */}
-              <div className="flex-1 bg-white overflow-hidden">
-                <AITestPanel />
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* 键盘快捷键帮助 */}
